@@ -3,7 +3,7 @@ name: repo-governance
 description: Converges one repository's agent harness (AGENTS.md plus the docs it reads on demand) to the current version, then leaves it alone. Use when a repo has no harness, a partial one, a foreign AGENTS.md, or an older harness stamp.
 ---
 
-# Better Coding
+# Repo Governance
 
 One run brings this repository to the harness contract below. After it, `AGENTS.md` runs the work and this skill is read again only when the conventions move.
 
