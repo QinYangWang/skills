@@ -151,7 +151,7 @@ is enough; the prompt is the part that matters. See
 It is the only file an agent reads before starting, so it carries what the first
 edit needs and links the rest.
 
-- A harness stamp on the line after the title: `<!-- better-coding harness: v2 -->`.
+- A harness stamp on the line after the title: `<!-- repo-governance harness: v2 -->`.
   It is read only by a later run, never at work time.
 - One paragraph: who writes, reviews, merges and releases; what this repo is;
   and that this file is the whole first read.

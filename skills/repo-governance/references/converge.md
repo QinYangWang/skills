@@ -11,16 +11,20 @@ each file is for. Use `../templates/`.
 ## 0. Detect the state
 
 Read `AGENTS.md` if it exists; otherwise treat the repo as empty. The stamp on
-the line under the title (`<!-- better-coding harness: v2 -->`) is the only
+the line under the title (`<!-- repo-governance harness: v2 -->`) is the only
 version signal.
+
+A legacy `<!-- better-coding harness: v2 -->` stamp is the same harness v2: the
+skill was renamed, nothing else changed. Treat such a repo as current and
+rewrite the line to the new name on the next run.
 
 | State | Signal | What this run does |
 | --- | --- | --- |
 | **Empty** | no `AGENTS.md`, no harness files | Full build: write the core set, then the conditional files that apply. |
 | **Partial** | some harness files, no entry, or an entry without the rest | Full build around what exists: keep what is true, add what is missing, point the route table at real files. |
-| **Older** | a better-coding entry whose stamp is older than the current harness | Upgrade first (section 2), then finish the build for anything still missing. |
+| **Older** | a repo-governance entry whose stamp is older than the current harness | Upgrade first (section 2), then finish the build for anything still missing. |
 | **Current** | stamp equals the current harness | Check the shape with section 3's first two bullets. If nothing drifted, report "already current" and change nothing. |
-| **Foreign** | `AGENTS.md` is not a better-coding entry: no stamp, a different shape | Do not convert it silently. Merge its facts into a new entry, keep every rule it carries, and say what moved where. |
+| **Foreign** | `AGENTS.md` is not a repo-governance entry: no stamp, a different shape | Do not convert it silently. Merge its facts into a new entry, keep every rule it carries, and say what moved where. |
 | **Drifted** | current stamp, but a second entry file, a missing on-demand doc, or an entry that no longer carries the first read | Repair only the named drift; do not rebuild. |
 
 State what you detected and what you did with each file. A run that changes
@@ -114,14 +118,14 @@ comment and placeholder row with no rule behind it.
 ## 2. Upgrade an older harness
 
 The entry file carries its harness version. An older stamp, or none on a file
-that is already a better-coding entry, means the repo predates the current
+that is already a repo-governance entry, means the repo predates the current
 conventions.
 
 ### Current harness
 
 | Harness | Contract | Upgrade by |
 | --- | --- | --- |
-| v1 | Two skills (`better-coding` + `better-coding-init`); the agent read `AGENTS.md`, one subsystem doc, `LESSONS.md` and `docs/code-standards.md` before editing; a per-project coding skill duplicated the entry; twelve rules; no branch model. | The v1 → v2 steps below. |
+| v1 | Two skills (`repo-governance` + `repo-governance-init`); the agent read `AGENTS.md`, one subsystem doc, `LESSONS.md` and `docs/code-standards.md` before editing; a per-project coding skill duplicated the entry; twelve rules; no branch model. | The v1 → v2 steps below. |
 | **v2 (current)** | One skill, one run. `AGENTS.md` is the only mandatory read and holds a one-screen rule digest; everything else is on demand; no per-project coding skill; sixteen rules; branch and commit gates; PR template names change kind, base branch and cost. | — |
 
 ### Plan first
@@ -177,7 +181,7 @@ Do these in order; a step that does not apply is skipped and said so.
 4. **Idempotent.** Running the whole procedure again must change nothing,
    because the stamp matches. If it plans changes again, the stamp or the plan is
    wrong.
-5. **One commit.** `chore(better-coding): converge harness v1 -> v2`, body naming
+5. **One commit.** `chore(repo-governance): converge harness v1 -> v2`, body naming
    the plan and what was left alone.
 6. **Owner gates hold.** Deleting a file, renaming the entry, touching CI or
    branch protection goes through the human gates in `SKILL.md`.
@@ -263,7 +267,7 @@ unverified. "Already current" is a complete report when it is true.
 ## Copy-paste invocation
 
 ```
-Use better-coding on this repository.
+Use repo-governance on this repository.
 
 1. Detect the state: empty, partial, older harness, current, foreign entry or
    drifted. Say which, and what each existing file needs.
@@ -281,7 +285,7 @@ merge them. Do not push the stable line.
 An audit-only run:
 
 ```
-Use better-coding in audit-only mode: detect the state, name the files that are
+Use repo-governance in audit-only mode: detect the state, name the files that are
 missing, stale or duplicated, list the 5 strongest lessons with evidence, and
 propose the 3 riskiest subsystems. Do not write files yet.
 ```

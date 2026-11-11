@@ -2,7 +2,7 @@
 the only file an agent must read before starting. Everything else is on demand.
 Keep the harness stamp line below; it is how a later run knows what is due. -->
 # <PROJECT> — notes for coding agents
-<!-- better-coding harness: v2 -->
+<!-- repo-governance harness: v2 -->
 
 <PROJECT> is <one sentence: what it is and who uses it>. Agents write, review,
 merge and release changes here; the owner sets direction and guards the
