@@ -1,14 +1,11 @@
-# Better Coding Skills
+# Agent Skills
 
 [![skills.sh](https://skills.sh/b/QinYangWang/skills)](https://skills.sh/QinYangWang/skills)
 
-One skill for agents that write, review, merge and release code: the loop, and
-the setup that writes the files the loop reads.
+Two skills for agents that do real work in real repositories:
 
-Most agent-maintained repositories fail in the same places: the fix covers the
-screenshot but not the class, the new test passes on the old code, the full
-suite was never run, and the commit says "tests pass" without saying what ran.
-This skill makes the repository the agent's memory and makes evidence the gate.
+- **[align-with-me](./skills/align-with-me/SKILL.md)** — agree on the requirement, the plan and the acceptance criteria before any work starts.
+- **[repo-governance](./skills/repo-governance/SKILL.md)** — give a repository the harness its agents read, once, then keep it current.
 
 ## Install
 
@@ -18,8 +15,8 @@ From GitHub:
 npx skills add QinYangWang/skills -g
 ```
 
-Choose `better-coding` for your agent (Pi, Claude Code, Codex, Cursor, and the
-rest). To list first:
+Choose `align-with-me` and `repo-governance` for your agent (Pi, Claude Code,
+Codex, Cursor, and the rest). To list first:
 
 ```bash
 npx skills add QinYangWang/skills --list
@@ -27,120 +24,84 @@ npx skills add QinYangWang/skills --list
 
 While developing this folder locally, use `npx skills add ./ -g` instead.
 
-## The idea: one entry file, one read
+## Two skills, two moments
 
-A run writes exactly one file the agent must read before starting: `AGENTS.md`.
-It carries the commands, the rules a change always needs, and a route table that
-names at most one more document per task.
+**Before the work: align.** A vague request is not a plan. `align-with-me` makes
+the agent interview the user in rounds — every question that can be asked now,
+numbered, with a recommended answer — until the requirement, the plan and the
+acceptance criteria are agreed in writing. Only then does it execute.
 
-Everything else — `LESSONS.md`, the code standards, the subsystem references,
-the verify script — is read **on demand**: searched, grepped, or run. Reading the
-whole docs tree is the failure mode this skill removes.
+**Once per repository: govern.** An agent-maintained repo fails in predictable
+ways: the fix covers the screenshot but not the class, the new test passes on the
+old code, the full suite was never run, the commit says "tests passed" without
+saying what ran. `repo-governance` writes the harness that prevents those: one
+entry file (`AGENTS.md`), docs read on demand, a verify command, and the nightly
+lesson loop.
 
-After setup the repository runs itself. An agent that opens `AGENTS.md` and works
-by it needs nothing from this skill.
+## Reference
 
-## One command
+- **[align-with-me](./skills/align-with-me/SKILL.md)** — the design tree, the
+  question rounds with recommended answers, the Spec block (understood / plan /
+  acceptance / not doing / assumptions), the questionnaire for what the user
+  cannot answer, and the rule that nothing executes before confirmation.
+- **[repo-governance](./skills/repo-governance/SKILL.md)** — one command that
+  detects the state and converges the repository on the current harness:
+  `AGENTS.md` as the only mandatory read, everything else on demand, a harness
+  stamp, and an idempotent second run.
 
-`/better-coding` converges a repository on the current harness. It reads the
-state and acts; there is no mode to choose:
-
-| State it finds | What it does |
-| --- | --- |
-| no harness, or a partial one | writes what is missing — entry first, then the docs it routes to |
-| an older harness stamp | applies the version delta, keeping every project fact and all evidence |
-| the current stamp | verifies the shape and changes nothing |
-| a foreign `AGENTS.md` | merges its facts into a new entry and says what moved |
-| a drift after setup | repairs only the named drift |
-
-Run it once per repository. Later, run the same command to upgrade when this
-skill's conventions move. The procedure is
-[`references/converge.md`](./skills/better-coding/references/converge.md).
+> `repo-governance` was published as `better-coding`. A repository stamped
+> `<!-- better-coding harness: v2 -->` is treated as current and renamed to the
+> new stamp on its next run.
 
 ## Use
 
-### 1. Run it once
+### 1. Align before a task
+
+```
+/skill:align-with-me
+Add export to the settings page.
+```
+
+The agent reads the code, asks the decisions in one numbered round with
+recommendations, then writes the Spec block and waits. It starts only after you
+confirm. If a decision needs someone else's knowledge, it writes
+`align-questionnaire-<slug>.md` for you to hand over.
+
+### 2. Set up a repository once
 
 ```bash
 cd /path/to/your/repo
 ```
 
-Then invoke the skill:
-
 ```
-/skill:better-coding
+/skill:repo-governance
 ```
 
-Or say:
-
-```
-Use better-coding on this repository.
-Detect the state and converge: build what is missing, upgrade an older harness,
-or say it is already current.
-AGENTS.md is the only entry the agent reads; the rest is on demand.
-Add a conditional file only where its failure mode exists.
-Do not invent commands, lessons or rules.
-```
-
-### 2. Review the generated files
-
-The core set:
-
-- `AGENTS.md` — the only mandatory read: facts, commands, rules in one screen,
-  route table, evidence block, gates.
-- `LESSONS.md`, `docs/code-standards.md`, `docs/subsystems/` — read on demand.
-- `scripts/verify.sh` — run, do not read.
-- `CLAUDE.md` — a two-line shim to `AGENTS.md`.
-- `.github/pull_request_template.md`, `docs/nightly-review.md`.
-
-Conditional files are added only when they apply: a surface matrix, a
-real-client verification skill, an agent context budget, `evals/`, review-agent
-contracts, contribution triage, a branch model with commit lint, design notes,
-or a release-candidate pipeline.
-
-Fill the real commands and run `scripts/verify.sh`. Then revert a recent fix in
-a scratch branch and confirm the named test fails.
+It detects the state — no harness, a partial one, an older harness, a foreign
+`AGENTS.md` — and converges the repo on the current harness: the entry file,
+the docs it routes to, `scripts/verify.sh`, the PR template and the nightly
+review. It reports what happened to every file, then stops being needed.
 
 ### 3. The repository runs itself
 
-From here the work is the repository's own loop, not this skill: an agent reads
-`AGENTS.md`, follows its route table, and leaves the evidence block. Nothing
-from this skill needs to be loaded again.
+From here the work is the repository's own loop: an agent reads `AGENTS.md`,
+follows its route table, and leaves the evidence block in the commit. Neither
+skill needs to be loaded again.
 
-### 4. Run the nightly review
+### 4. When the conventions change
 
-Use `docs/nightly-review.md` with a scheduled agent session, cron, or manually:
-
-```
-Follow docs/nightly-review.md for yesterday's merged commits.
-Only edit LESSONS.md and docs/code-standards.md. Open a PR; never push the
-stable line.
-```
-
-A lesson seen on three separate days is promoted into the code standards and,
-where possible, a guard test.
-
-### 5. When the skill changes
-
-Run the same command again. The entry file carries the harness stamp; when it is
-older than the skill, the run prints a plan, patches only the sections the
-version table names, keeps every project fact and every piece of evidence, and
-stamps the new version. There is no separate migrate command and nothing to
-choose.
-
-```
-/skill:better-coding
-```
-
-The upgrade is a patch, not a rewrite, and running it again afterwards must
-change nothing. The version table and the v1 → v2 steps are in
-[`references/converge.md`](./skills/better-coding/references/converge.md).
+Run `/skill:repo-governance` again. The entry file carries a harness stamp; an
+older stamp makes the run print a plan, patch only the sections the version
+table names, keep every project fact and all evidence, and stamp the new
+version. A second run must report `already current`.
 
 ## Repository layout
 
 ```
 skills/
-└── better-coding/
+├── align-with-me/
+│   └── SKILL.md
+└── repo-governance/
     ├── SKILL.md
     ├── references/
     │   ├── converge.md
@@ -158,22 +119,20 @@ inside the skill they belong to.
 
 ## Design rules
 
-- No generic advice. Every generated rule cites a commit, issue, incident or
+- **Align before executing.** A request is a starting point, not a spec. The
+  requirement, the plan and the acceptance criteria are agreed in writing first.
+- **One entry file.** A repo's agent reads `AGENTS.md` once; everything else is
+  on demand and named by its route table.
+- **One convergent command.** The same run builds, upgrades or reports nothing
+  to do, guided by the stamp in the entry file.
+- **No generic advice.** Every generated rule cites a commit, issue, incident or
   explicit owner decision.
-- No invented commands. Unverified commands stay `TODO`.
-- One entry file. A repo's agent reads `AGENTS.md` once; everything else is on
-  demand and named by its route table.
-- One convergent command. The same run builds a repo, upgrades an old harness or
-  repairs a drift, guided by the stamp in its entry file; it never asks which.
-- A generated file must be worth a read. If nobody reads it and no gate checks
+- **No invented commands.** Unverified commands stay `TODO`.
+- **A generated file must earn its read.** If nobody reads it and no gate checks
   it, it does not belong in the repository.
-- Small budgets. The entry file routes; the code standards hold the rules; the
-  lesson notebook holds the evidence.
-- Branch by change kind: a fix ships from the stable line, new surface waits on
-  the next minor behind a design note, a breaking change asks the owner.
-- Human gates stay human: product decisions, security, credentials,
+- **Human gates stay human:** product decisions, security, credentials,
   irreversible migrations, spending and community conduct.
-- Portable. Markdown and shell only; no runtime dependency.
+- **Portable.** Markdown and shell only; no runtime dependency.
 
 ## License
 
