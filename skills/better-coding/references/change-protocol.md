@@ -6,11 +6,28 @@ makes them meaningful.
 
 ## Before you edit
 
+### 0. Pick the branch and the change kind
+
+Name the change kind first, because it decides the base branch and the review:
+
+| Kind | Base | Needs |
+| --- | --- | --- |
+| fix | stable line (`main`) | a reproduction |
+| feature, new option, new surface | next minor (`minor`) | an approved design note |
+| breaking change | major line | the note plus a migration |
+| chore, docs, tests, build | `main` | nothing beyond the diff |
+| refactor | `main` | a measured reason, in its own change |
+
+A fix and a feature on one branch is not reviewable against either line: split
+it before you write code. Never commit to the long-lived branches themselves.
+The full model, including the cherry-pick-forward rule and what is refused, is
+in `contribution-and-branches.md`.
+
 ### 1. Route the task
 
-Name the subsystem and the real runtime path. Read the owning reference in
-`docs/subsystems/`. If the task crosses subsystems, name each one and the
-contract between them.
+Name the subsystem and the real runtime path. `AGENTS.md`'s route table names
+the owning reference; read that one file, not the tree. If the task crosses
+subsystems, name each one and the contract between them.
 
 If no reference exists for a high-risk area, write one before changing the
 area, or ask the owner whether the area is high-risk. A change to undocumented
@@ -52,7 +69,8 @@ works on the surface you tested and is missing everywhere else.
 One goal per change. Write down what you are deliberately not doing. Unrelated
 refactors, extra features and policy changes go in their own change. If you find
 a second bug on the way, file it or fix it in a separate commit; do not bundle
-it.
+it. Name the change kind and its base branch beside the goal, so the reviewer
+can check the base before reading the diff.
 
 ## Agent safety in a live environment
 
@@ -134,8 +152,8 @@ Read it as a reviewer who did not write it:
 - Did you touch a file outside the goal?
 - Did you leave a debug print, a temporary skip, a widened type, a changed
   timeout or a loosened assertion?
-- Did you update the owning subsystem reference, the command list or the
-  project skill?
+- Did you update the owning subsystem reference, the command list or the route
+  table in `AGENTS.md`?
 - Did you add a test that would pass on the old code?
 - Does the commit body name the pushed head and the real output?
 
@@ -148,7 +166,7 @@ session shares the machine, use your own worktree.
 ### 5. Write the record
 
 ```
-<area>: <what the user now sees, as behavior>
+<type>(<scope>): <what the user now sees, as behavior>
 
 Fixes #<n> (<reporter>).
 Root cause: <one or two sentences>.
@@ -161,23 +179,37 @@ Ran at <pushed sha>:
 Docs: <owning reference updated>.
 ```
 
+The header is `<type>(<scope>): <subject>` per the commit convention (`fix`,
+`feat`, `perf`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, `revert`),
+so the changelog can be generated from it. A break goes in the footer as
+`BREAKING CHANGE: <what users must do>`. The evidence lives in the body: the
+header stays short and machine-readable, the body stays long and
+human-readable.
+
 Rules:
 
-- The subject is one short line. The body carries the evidence.
-- Name the commit or issue the change responds to.
+- The subject is one short line, imperative, lowercase, no trailing dot, at
+  most 50 characters.
+- The evidence block names the pushed head, never an older base.
+- Name the commit or issue the change responds to; `close #123` in the footer.
 - If the body is longer than a few KB, squash it; a 500 KB default squash
   message is not a record.
 - A placeholder such as `SUITE_LINE` is not a record. Grep the body before you
   push.
 - If a community patch, fixture or root cause was used, credit the reporter.
+- The changelog is generated from these headers. Never hand-edit it; a change
+  that reads wrong in the changelog gets a different subject.
 
 ### 6. Open the PR with the evidence
 
 Use the template in `templates/pull-request-template.md`:
 
 ```md
+## Change kind and base
 ## Goal
+## Design note (new surface only)
 ## Semantic change (trigger, before, after)
+## Cost (hot path, bundle size, dev-only code)
 ## Evidence
 - Red check
 - Break check
@@ -188,8 +220,11 @@ Use the template in `templates/pull-request-template.md`:
 ```
 
 A PR that says "tests pass" without the command and the output is not ready.
+A PR whose base branch does not match its change kind is not ready either: a
+feature opened against the stable line has no release path, and a fix opened
+against the minor line waits for a release it does not belong to.
 
-## The twelve rules in detail
+## The sixteen rules in detail
 
 ### 1. Reproduce the reporter's exact case, on the surface they use
 
@@ -310,21 +345,76 @@ not told to users as working.
 **Check:** name the real account/config/binary and the sandbox. If a check is
 impossible, write `Not run: <check> (<why>)` in the commit and the PR.
 
+### 13. The change lands on the branch its kind belongs to
+
+A fix belongs on the stable line, where it can ship as a patch. New
+user-visible surface belongs on the next minor, where it can be released
+deliberately. A breaking change belongs on the major line, behind the owner.
+The review is worth little if it verified a tree that will never ship, or a
+tree that will ship a feature in a patch release.
+
+A fix that must also reach the minor line is cherry-picked forward
+(`git cherry-pick -x <sha>`); the stable line is never merged into it.
+
+**Check:** the PR's base branch matches the change kind, and the branch carries
+one kind. The owner's branch protection was not edited to make it fit.
+
+### 14. New surface starts with an approved design note
+
+An API shaped by its implementation is expensive once users depend on it. Write
+the note first — problem, surface, alternatives, cost, migration — and get the
+owner's approval recorded in it. A fix that quietly adds an option or an export
+is a new surface smuggled past the gate.
+
+**Check:** the new surface names its note and the approval; a fix with a new
+export, flag or config key is refused.
+
+### 15. No stylistic refactors in a fix
+
+Readability is subjective and the project already chose its style. A rename, a
+reformat or a reorganisation in a fix buries the behavior change, makes the
+diff unreviewable and destroys `git log` archaeology. A refactor is accepted
+only with a measured reason — faster, smaller, or it unblocks a named feature —
+and it goes in its own change.
+
+**Check:** the diff of a fix touches only what the goal needs; a refactor names
+its measurement.
+
+### 16. The header is conventional; the changelog is generated
+
+`<type>(<scope>): <subject>` is machine-read and feeds the changelog; the body
+carries the evidence and stays out of it. Only `feat`, `fix`, `perf` and a
+`BREAKING CHANGE` reach the release notes, so a behavior change hidden under
+`chore` reaches users unannounced. A hand-edited changelog contradicts the
+commits it claims to summarise.
+
+**Check:** the header matches the convention and a lint/hook enforces it; the
+changelog was generated; a break has its footer and its migration.
+
 ## Reviewer protocol
 
 A reviewer does not read the diff and approve. They:
 
-1. Pull the head and merge it onto current main (or rebase it) in their own
-   worktree.
-2. Run the acceptance gates; compare the result with the claim.
-3. Break the fix by hand in several ways and confirm the new tests catch each.
-4. Check each platform and architecture the change reaches.
-5. Follow the whole path: the value is saved and read under the same name; the
+1. Check the base branch and the change kind first: a feature opened against
+   the stable line, or a branch carrying a fix and a feature, is sent back
+   before anyone reads the code.
+2. Pull the head and merge it onto the branch it targets in their own worktree.
+3. Run the acceptance gates; compare the result with the claim.
+4. Break the fix by hand in several ways and confirm the new tests catch each.
+5. Check each platform and architecture the change reaches.
+6. Follow the whole path: the value is saved and read under the same name; the
    button updates the binary that actually runs; aliases do not collide.
-6. Check the vendor's source, not the PR's account of the vendor.
-7. Check that docs match the code and every link resolves.
-8. Keep the PR to its goal; unrelated changes go elsewhere.
-9. Write what was run, at which head, before merging. Merge only that head.
+7. Check the vendor's source, not the PR's account of the vendor.
+8. Check that docs match the code and every link resolves.
+9. Keep the PR to its goal; unrelated changes and stylistic refactors go
+   elsewhere.
+10. Check the header against the commit convention and the changelog entry it
+    produces; a break must carry its footer and its migration.
+11. Write what was run, at which head, before merging. Merge only that head.
+12. After a fix lands on the stable line, cherry-pick it forward with `-x` when
+    the owner says it ships in the next minor. Never merge the stable line into
+    the minor line. If the owner pushes to the branch, the earlier review is
+    void: re-run at the new head.
 
 If a review finds a known-wrong behavior that is out of scope, file it and name
 it; do not merge silently past it.
@@ -335,10 +425,12 @@ Stop before:
 
 - reversing an owner's deliberate decision;
 - changing `.github/`, release scripts, update feeds, permissions or secrets;
+- changing the branch model, branch protection or the commit lint;
+- approving a new API surface, or landing one without its design note;
 - touching real credentials, a live gateway or a user's live config;
 - a migration or deletion with no rollback;
 - spending money, contacting users, or making a public claim;
 - blocking a community author.
 
 The agent proposes; the owner decides. Write the evidence for the owner, not a
- verdict they have to reverse.
+verdict they have to reverse.

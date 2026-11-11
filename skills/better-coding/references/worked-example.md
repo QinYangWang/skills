@@ -12,18 +12,20 @@ Issue #412:
 > there but truncated. It overwrote the index and lost 12,000 entries. I'm on
 > Linux, relayd v1.8.2, ext4.
 
-## Read order
+## Reads, one at a time
 
-The agent reads:
+`AGENTS.md` is the whole first read. The rest happen only because the task asks
+for them, and two of them are searches rather than cover-to-cover reads.
 
 1. `AGENTS.md` — routes "cache/index" to `docs/subsystems/cache.md`, says the
    full suite is `go test ./...`, and names the real-use check.
 2. `docs/subsystems/cache.md` — the index is written temp-and-rename; a read
    failure must keep the last good value; `readIndex` is the shared reader.
-3. `LESSONS.md` — finds a related entry: *A failed read means unknown* (seen
-   once, on a settings file).
-4. `docs/code-standards.md` — "A failed read, parse or hash means unknown" is
-   not yet a standard; the tests section requires a red check and a break check.
+3. `LESSONS.md`, searched for "failed read" — finds a related entry: *A failed
+   read means unknown* (seen once, on a settings file).
+4. `docs/code-standards.md`, searched for "failed read" — "A failed read, parse
+   or hash means unknown" is not yet a standard; the tests section requires a red
+   check and a break check.
 5. Source: `internal/cache/index.go`, `internal/cache/store.go`, and the last
    five commits that touched them.
 

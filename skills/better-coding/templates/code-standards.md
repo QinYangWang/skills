@@ -6,6 +6,9 @@ change that does not meet one gets a comment naming the rule. How to describe
 and review a change to a subsystem is in
 [`docs/subsystems/README.md`](docs/subsystems/README.md).
 
+Read this file on demand: grep the rule you are unsure of. It is not part of the
+first read; `AGENTS.md` carries the digest a change always needs.
+
 Keep only the rules this project has actually needed. Delete a rule that no
 longer applies; do not carry it as decoration.
 
@@ -14,6 +17,9 @@ longer applies; do not carry it as decoration.
 | Rule | What a reviewer looks at |
 | --- | --- |
 | A change does only what its goal needs. | Every behavior change has a reason. Unrelated refactors, extra features and policy changes go in their own change. |
+| A change sits on the branch its kind belongs to. | A fix on `<stable>`, new surface on `<next minor>`, a break behind the owner. A branch with two kinds is split before review. |
+| A fix adds no new surface. | No new option, export, flag or config key inside a bug fix. New surface names its approved design note and ships in the minor line. |
+| A fix contains no stylistic refactor. | No reformat, rename or reorganisation. A refactor names its measured reason and goes alone; formatting belongs in the formatter. |
 | A fix covers exactly the cases it means to. | Which cases change, and which neighboring ones stay the same. Different errors are not handled as one. |
 | A change holds on the whole path. | Follow it from the user's input to the end result, through callers, state and side effects. One correct function does not make the operation correct. |
 | A fix reaches every sibling of the bug. | Grep for the same pattern: every route, command, provider, platform branch, guard and caller of a changed predicate. If a sibling is left alone, file it in the same change and name it. |
@@ -70,9 +76,11 @@ as **not run**, never left out.
 6. **Every platform the change reaches.** A cross-OS build does not run the
    tests. A platform report is checked on that platform. A browser engine is
    not a native webview.
-7. **The record.** The commit body says what was run, at which head, where the
-   full suite ran, and what was not run. The merge names the reviewed head. A
-   tag waits for a completed green run on that commit.
+7. **The record.** The commit header follows the convention and the changelog
+   entry it generates says what a user needs to read. The body says what was
+   run, at which head, where the full suite ran, and what was not run. The merge
+   names the reviewed head. A tag waits for a completed green run on that
+   commit.
 
 ## Reviewing a change
 
@@ -100,17 +108,30 @@ These patterns come from real reviews. A reviewer checks each one that applies:
 
 ## Commits and merges
 
+- **Branch by kind.** A fix, chore, doc or test goes to `<stable>`; a new
+  user-visible surface goes to `<next minor>`; a break waits for the owner. A
+  branch carries one kind. Never commit to a long-lived branch.
+- **Header follows the convention:** `<type>(<scope>): <subject>`, types
+  `feat|fix|perf|docs|refactor|test|build|ci|chore|revert`; imperative,
+  lowercase, no trailing dot, at most 50 characters.
+- **Footer carries the link and the break:** `close #123`, and
+  `BREAKING CHANGE: <what users must do>` when the change breaks a contract.
+- **The changelog is generated from headers.** Only `feat`, `fix`, `perf` and a
+  break appear in it. Nobody edits it by hand, and a behavior change cannot hide
+  under `chore`.
 - One commit, one goal. Two reports fixed together are two commits.
-- The subject names the area and the user-visible behavior:
-  `<area>: <what the user now sees>`.
 - The body says how it was verified and which test fails without the change.
 - The record is in the commit body, not in a chat, a push note or only on the
   PR.
 - Merge only the reviewed head:
   `gh pr merge --match-head-commit <reviewed sha>`.
-- A push after the review triggers a new review, not a merge.
-- A tag is not a release. Verify the tag is on main, the CI run finished green,
-  and the release has its assets and the latest marker.
+- A push after the review triggers a new review, not a merge. An owner push is
+  a push.
+- A fix that ships in the next minor is cherry-picked forward with
+  `git cherry-pick -x <sha>`; the stable line is never merged into the minor
+  line.
+- A tag is not a release. Verify the tag is on the line it ships from, the CI
+  run finished green, and the release has its assets and the latest marker.
 
 ## Project-specific rules
 

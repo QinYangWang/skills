@@ -11,13 +11,15 @@ looks finished while it is not.
 - the affected subsystem and runtime path are named;
 - the reporter's exact case is reproduced, or a failing test exists;
 - the sibling/caller/state map is written;
-- the goal and non-goals are one paragraph each.
+- the goal and non-goals are one paragraph each;
+- the change kind and its base branch are named, and they agree.
 
 **Does not count**
 
 - "I can see the bug in the code."
 - A screenshot without the reporter's platform/config.
 - A test that asserts the current (buggy) behavior.
+- A branch that carries two change kinds, one of which is a new surface.
 
 **Record:** the reproduction command and its output.
 
@@ -43,7 +45,33 @@ loads up front, measure it.
 - a budget no test reads.
 
 **Record:** the budget file, the measuring test, the CI comparison, and any
-approved growth. See the context-budget deliverable in `better-coding-init/SKILL.md`.
+approved growth. See the context-budget deliverable in `converge.md`.
+
+## Gate 0c — Branch and contribution fit
+
+Before the diff is read, the tree has to be the one that ships.
+
+**Passes when**
+
+- the base branch matches the change kind: fix → stable line, new surface → next
+  minor, breaking change → major line, chore/docs/tests → stable line;
+- the branch carries one kind, and the subject of the header says which;
+- new user-visible surface names an approved design note, and the note says who
+  is affected and what it costs;
+- a refactor names a measured reason and is not mixed into a fix;
+- no reformat, repo-wide rename or drive-by cleanup is in the diff.
+
+**Does not count**
+
+- "It was easier to open it against main."
+- A feature released in a patch version.
+- A note written after the implementation, describing the API that came out.
+- A refactor explained only as "cleaner" or "more readable".
+- A large diff whose formatting noise hides the behavior change.
+
+**Record:** the base branch, the change kind, the design note link or why none
+is needed, and the cost measurement for a refactor. See
+`contribution-and-branches.md`.
 
 ## Gate 1 — Red check
 
@@ -201,7 +229,7 @@ generated titles or other model-facing text, add an eval.
 - a paid eval run in CI without a budget.
 
 **Record:** eval name, model, number of samples, baseline, pass/fail, cost.
-See the evals deliverable in `better-coding-init/SKILL.md`.
+See the evals deliverable in `converge.md`.
 
 ## Gate 5 — Cross-platform and architecture
 
@@ -230,7 +258,7 @@ claims to support, and a platform-specific report is checked on that platform.
   behavior changes;
 - every link resolves and every cited symbol exists;
 - the semantic change is described by trigger, before, after and verification;
-- the project skill and command list still match reality;
+- the commands and route table in `AGENTS.md` still match reality;
 - an internal refactor that preserves contracts says so.
 
 **Does not count**
@@ -243,9 +271,11 @@ claims to support, and a platform-specific report is checked on that platform.
 
 ## Gate 7 — Record
 
-**Passes when** the commit body has:
+**Passes when** the commit has a conventional header and the body has:
 
 ```
+<type>(<scope>): <subject>
+
 Ran at <pushed sha>:
 - Red check: ...
 - Break check: ...
@@ -264,6 +294,7 @@ and the PR repeats it.
 - A body whose SHA is not the pushed head.
 - A placeholder such as `SUITE_LINE`.
 - Two commits sharing one body word for word.
+- A body carrying the changelog wording, or a header carrying the evidence.
 
 **Record:** the body itself. This is the artifact a later review reads.
 
@@ -271,27 +302,40 @@ and the PR repeats it.
 
 **Passes when**
 
-- a reviewer pulled the head and merged it onto current main;
+- the merge goes into the branch the change kind belongs to, not "whichever is
+  easier";
+- a reviewer pulled the head and merged it onto that branch;
 - the acceptance gates were run on the result;
 - the merge names the reviewed head:
   `gh pr merge --match-head-commit <reviewed sha>`;
 - the PR comment says what was run, at which head, before the merge;
-- a push after the review triggers a new review, not a merge;
+- a push after the review triggers a new review, not a merge — this includes a
+  push by the owner, whose edit is a contribution like any other;
+- a fix that ships in the next minor is cherry-picked forward with
+  `git cherry-pick -x <sha>`; the stable line is never merged into the minor
+  line;
 - the PR is still to its goal; a known problem is fixed or filed, not merged
   past.
 
 **Does not count**
 
 - Reading the diff and approving.
-- Merging a later push under an earlier review.
+- Merging a later push under an earlier review, or an owner edit under a review
+  that ran before it.
 - A draft PR merged without marking it ready.
 - A known red test in the PR's own new test.
+- A feature merged into the stable line, or a fix merged into the minor line.
+- A merge commit that pulls the whole stable line into the minor line "to keep
+  it up to date".
 
 ## Gate 9 — Release
 
 **Passes when**
 
-- the tag is on main and is an ancestor of `origin/main`;
+- the tag is on the line it ships from, and is an ancestor of that line's
+  `origin`: a patch is tagged on the stable line, a minor is tagged on the
+  stable line **after** the minor line was merged into it once — never on the
+  minor line itself;
 - a CI run on the tagged commit (or a later one containing it) **finished**
   green; a run cancelled by the next push is not a pass;
 - the release has all expected assets;
@@ -314,7 +358,7 @@ For a product that ships frequently, the release train is part of the gate:
 - only a plain stable version is marked latest; preview and candidate builds
   are prereleases.
 
-See the release-candidate deliverable in `better-coding-init/SKILL.md`.
+See the release-candidate deliverable in `converge.md`.
 
 **Does not count**
 
@@ -354,19 +398,25 @@ the next agent would make the same mistake.
 | "Not tried, but it should work." | Then it is not done and users are not told it works. |
 | "The PR is approved." | Was the reviewed head the merged head? |
 | "The tag is pushed." | A tag is not a release until the assets are published. |
+| "I opened it against main — it was easier." | The change kind decides the base branch; a feature there has no release path. |
+| "It's only a small API addition." | New surface needs an approved design note before the code. |
+| "I tidied the file while I was there." | A stylistic refactor buries the fix; it goes in its own change. |
+| "I fixed up the changelog entry." | The changelog is generated from conventional headers. |
+| "The owner approved it, so I merged it." | An owner edit is a new head; re-run the gates at it. |
 
 ## Adapting the gates
 
-`better-coding-init` fills the exact commands. A project's `scripts/verify.sh`
+`converge.md` fills the exact commands. A project's `scripts/verify.sh`
 should run the gates that can be automated, in this order:
 
-1. format/lint/typecheck (fast, deterministic);
-2. changed-scope tests and dependents;
-3. full suite in a sandbox (or print the CI run that owns it; never fake it);
-4. race/timing checks where relevant;
-5. real-use check (or a printed `not run` with the reason);
-6. agent-context budget, if the repo measures it;
-7. a summary that names what ran and what did not.
+1. commit header convention and changelog check over the range being pushed;
+2. format/lint/typecheck (fast, deterministic);
+3. changed-scope tests and dependents;
+4. full suite in a sandbox (or print the CI run that owns it; never fake it);
+5. race/timing checks where relevant;
+6. real-use check (or a printed `not run` with the reason);
+7. agent-context budget, if the repo measures it;
+8. a summary that names what ran and what did not.
 
 The script must fail on the first failure and on an unfilled `TODO`. A verify
 script that prints "not run" and exits 0 is worse than no script: it turns a

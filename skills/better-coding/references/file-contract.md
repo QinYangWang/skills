@@ -18,28 +18,31 @@ when the project has that problem.
 
 | Path | Status | Purpose | Read when | Update when | Budget |
 | --- | --- | --- | --- | --- | --- |
-| `AGENTS.md` | Required | Router: identity, read order, project facts, task-to-doc table, evidence rule, agent safety, human gates. | Every session, first. | A doc, command, subsystem or boundary changes. | ≤ 120 lines + measured context budget |
-| `CLAUDE.md` | Recommended | Three-line shim for Claude Code: `@AGENTS.md` and `@LESSONS.md`. | Claude Code starts. | `AGENTS.md` changes. | ≤ 5 lines |
-| `LESSONS.md` | Required | Error notebook: rule, evidence, fix, done-right, `Seen N× (dates)`. | Before changing code; search for the area and symptom. | Nightly review; promotion. | ≤ 800 lines |
-| `docs/code-standards.md` | Required | Hard rules a reviewer checks, tests rules, acceptance criteria, review checklist, commit rules. | Before a change and during review. | A lesson is seen on 3 separate days; an owner changes a rule. | ≤ 250 lines |
-| `docs/subsystems/README.md` | Required if >1 area | Map of subsystem references, maintenance rules, semantic-change description, review steps. | Before choosing where to work. | A subsystem is added, split, merged or retired. | ≤ 60 lines |
-| `docs/subsystems/<area>.md` | Required for each high-risk area | Design reference: responsibilities, source of truth, runtime path, state, contracts, failure behavior, verification — the cross-component behavior a reader cannot get from one file. | Before changing that area. | A documented responsibility, interface, state transition or failure behavior changes. | ≤ 300 lines each |
-| `scripts/verify.sh` | Required | One command for the local gates: fast changed-scope check, tests, real-use check, not-run report. The full suite may run in CI; the script must say where. | Before every commit. | A command or environment requirement changes. | ≤ 100 lines |
+| `AGENTS.md` | Required | The entry: identity, commands, the rules in one screen, branch and commit rules, task-to-doc route table, evidence rule, agent safety, human gates. | **The only mandatory read**, start to end, once. | A doc, command, subsystem or boundary changes. | ≤ 150 lines + measured context budget |
+| `CLAUDE.md` | Recommended | Two-line shim for Claude Code: `@AGENTS.md` and `@LESSONS.md`. | Claude Code starts. | `AGENTS.md` changes. | ≤ 5 lines |
+| `LESSONS.md` | Required | Error notebook: rule, evidence, fix, done-right, `Seen N× (dates)`. | On demand: search the area and symptom. Never read end to end. | Nightly review; promotion. | ≤ 800 lines |
+| `docs/code-standards.md` | Required | Hard rules a reviewer checks, tests rules, acceptance criteria, review checklist, commit rules. | On demand: grep the rule you are unsure of. | A lesson is seen on 3 separate days; an owner changes a rule. | ≤ 250 lines |
+| `docs/subsystems/README.md` | Required if >1 area | Map of subsystem references, maintenance rules, semantic-change description, review steps. | On demand: when `AGENTS.md`'s route table sends you to an area. | A subsystem is added, split, merged or retired. | ≤ 60 lines |
+| `docs/subsystems/<area>.md` | Required for each high-risk area | Design reference: responsibilities, source of truth, runtime path, state, contracts, failure behavior, verification — the cross-component behavior a reader cannot get from one file. | On demand: that one area, when the task names it. | A documented responsibility, interface, state transition or failure behavior changes. | ≤ 300 lines each |
+| `scripts/verify.sh` | Required | One command for the local gates: commit lint, fast changed-scope check, tests, real-use check, not-run report. The full suite may run in CI; the script must say where. | On demand: run it, do not read it. | A command or environment requirement changes. | ≤ 100 lines |
 | Nightly job (cron, scheduled workflow or local command) | Recommended | Runs the review prompt from the last `reviewed-through` SHA and opens a PR. | Daily, after the day's merges. | The schedule, range or prompt changes. | One job |
 | `docs/nightly-review.md` | Required | The nightly prompt, range, output rules and the local command. | When running or changing the review. | The review rules or scheduler change. | ≤ 80 lines |
-| `.agents/skills/<project>-coding/SKILL.md` | Recommended | Project adapter for skill-aware agents: read order, exact commands, local invariants, boundaries. | Every session in that repo. | Commands, stack or boundaries change. | ≤ 100 lines |
-| `.agents/skills/test-<project>-app/SKILL.md` | Optional | Real-client verification skill: start the app in isolated state, drive the affected flow with the product's own tools, capture before/after, retain for the user, stop only what you started. | A UI or integration change. | The app's test harness or surfaces change. | ≤ 120 lines |
+| `.agents/skills/test-<project>-app/SKILL.md` | Optional | Real-client verification skill: start the app in isolated state, drive the affected flow with the product's own tools, capture before/after, retain for the user, stop only what you started. | On demand: a UI or integration change. | The app's test harness or surfaces change. | ≤ 120 lines |
 | `docs/surface-matrix.md` | Optional | The surfaces a change must consider: entry points, clients, providers, agents, contracts, reverse states, connection modes, docs. | Before a cross-surface change. | A surface is added or removed. | ≤ 60 lines |
 | `evals/` | Optional | Real-model cases for prompts, tool descriptions, generated titles and other model-facing text. | When model-facing text changes. | A new case, model or grader. | 3–7 cases to start |
-| Agent context budget (`<context-budget.json>` or equivalent) + measuring test | Optional | Byte budget for the text the model loads up front; a test keeps it equal to the measured text; CI fails on growth. | When the router or skills grow. | The owner approves growth, or text shrinks. | One file + one test |
+| Agent context budget (`<context-budget.json>` or equivalent) + measuring test | Optional | Byte budget for the text the model loads up front; a test keeps it equal to the measured text; CI fails on growth. | When the entry file or skills grow. | The owner approves growth, or text shrinks. | One file + one test |
 | `.github/review-agents/<concern>.md` | Optional | One scoped AI review concern: include/exclude, changed lines only, budget, exact no-findings output. | When adding AI review. | The concern or its scope changes. | ≤ 80 lines each |
-| `.github/pull_request_template.md` | Optional | Forces the evidence block into every PR. | Opening a PR. | The evidence format changes. | ≤ 40 lines |
+| `.github/pull_request_template.md` | Optional | Forces the change kind, base branch and evidence block into every PR. | Opening a PR. | The evidence format or branch model changes. | ≤ 50 lines |
+| `docs/contributing.md` | Optional | The branch model (which line takes which change), the accepted and refused change kinds, the design-note gate, the commit convention and how the changelog is generated. | Before choosing a base branch or reviewing a contribution. | The branch model, convention or changelog rule changes. | ≤ 150 lines |
+| `docs/plans/<date>-<slug>.md` | Optional | Approved design note for a new API surface: problem, proposed surface, rejected alternatives, cost, compatibility, migration. | Before implementing new surface. | A new surface is proposed, approved or dropped. | ≤ 150 lines each |
 | `docs/contributors.md` | Optional | Community PR policy: harm check, close-without-review rules, credit, blocking. | Reviewing an external PR. | Policy or list changes. | ≤ 120 lines |
 | `docs/reference.md` | Optional | User-facing reference: CLI, API, config, file formats. | A user-visible contract changes. | The contract changes. | As needed |
 
-Do not add: a separate process document, meeting notes, an agent diary, a
-second copy of the rules, or a "roadmap" that no gate reads. If a fact is not
-read by an agent or checked by a reviewer, it does not belong in this set.
+Do not add: a second process document beside the branch/contribution contract,
+meeting notes, an agent diary, a second copy of the rules, a per-project coding
+skill that repeats `AGENTS.md` (it doubles the first read; `CLAUDE.md` is the
+only shim), or a "roadmap" that no gate reads. If a fact is not read by an agent
+or checked by a reviewer, it does not belong in this set.
 
 ## If a file is missing
 
@@ -48,12 +51,12 @@ fallback and say which one you used:
 
 | Missing | Fallback |
 | --- | --- |
-| `AGENTS.md` | Read `README`, `CONTRIBUTING` and the nearest subsystem doc. Propose the router before a large change. |
+| `AGENTS.md` | Read the `README` and the contributing guide, then propose the entry file before a large change. Until it exists, read on demand and say which doc you used. |
 | `LESSONS.md` | Search the last 90 days of git history for reverts, hotfixes and repeated fixes. Do not invent a lesson. Propose the notebook. |
 | `docs/code-standards.md` | Use the project's contributing guide plus the process rules in `templates/code-standards.md`. Propose the file. |
 | A subsystem reference | Read the source and tests. Write a short reference before changing a high-risk area. |
 | `scripts/verify.sh` | Run the documented commands manually and record them. Propose the script. |
-| A project skill | Use `AGENTS.md` and the docs directly; the skill is an adapter, not a dependency. |
+| A branch policy | Ask the owner which line the change ships in; never guess. Propose `docs/contributing.md`. |
 
 A missing file is a finding. Do not silently substitute a generic rule for the
 project's actual contract.
@@ -72,9 +75,14 @@ scripts/verify.sh
 docs/nightly-review.md
 ```
 
-Add the project skill and PR template when more than one agent or more than one
-contributor touches the repo. Add `docs/contributors.md` only when outside PRs
-arrive. Add `docs/reference.md` only when users depend on a contract.
+Add `CLAUDE.md` and the PR template when more than one agent or more than one
+contributor touches the repo. Add `docs/contributing.md` when the repo has more
+than one release line, outside PRs, or a changelog assembled from commits. Add
+`docs/contributors.md` only when outside PRs arrive. Add `docs/reference.md` only
+when users depend on a contract.
+
+Seven files, one of them read first. If a setup starts producing a documentation
+tree, cut it back: the entry file plus the docs its route table names.
 
 ## Example structure: single service
 
@@ -92,10 +100,6 @@ relayd/
 │       └── http.md
 ├── scripts/
 │   └── verify.sh
-├── .agents/
-│   └── skills/
-│       └── relayd-coding/
-│           └── SKILL.md
 └── .github/
     └── pull_request_template.md
 ```
@@ -144,13 +148,23 @@ is enough; the prompt is the part that matters. See
 
 ### `AGENTS.md`
 
-- One paragraph: who writes, reviews, merges and releases; what this repo is.
-- Read order, with the fallback when a file is missing.
+It is the only file an agent reads before starting, so it carries what the first
+edit needs and links the rest.
+
+- A harness stamp on the line after the title: `<!-- better-coding harness: v2 -->`.
+  It is read only by a later run, never at work time.
+- One paragraph: who writes, reviews, merges and releases; what this repo is;
+  and that this file is the whole first read.
 - Project facts: stack, build, fast check, full suite **and where it runs**,
-  real-use check, platforms, release command.
-- Task-to-doc table. Keep it short; link out.
-- The rule that a documented subsystem's reference is updated in the same
-  change.
+  commit-header lint, real-use check, branches, platforms, release command.
+- The loop in six one-line steps: branch, reproduce, map, change, prove, record
+  and merge.
+- Rules that always apply: a one-screen digest of the rules a change cannot
+  break (about ten bullets), not the full rule table.
+- Route by task: at most one document per task, and how to read it (`LESSONS.md`
+  — search; `docs/code-standards.md` — grep; `scripts/verify.sh` — run).
+- Branches and commits: target branch per change kind, header format, footer
+  links, generated changelog.
 - The evidence rule: what a commit body must contain, and which evidence type
   matches which change.
 - Agent safety: kill only a captured PID, never write the live state directory,
@@ -159,9 +173,14 @@ is enough; the prompt is the part that matters. See
 - The escape hatch: if a rule fights the task, say so and get the owner's
   sign-off before breaking it.
 
-It must **not** contain the code standards, a full architecture, a changelog or
-release notes. Those live elsewhere. A router that duplicates its
-destinations drifts from them.
+It must **not** contain the full code-standards table, a full architecture, a
+changelog or release notes. A digest is allowed because it saves a read; a copy
+of a destination drifts from it.
+
+### `CLAUDE.md`
+
+Two lines: `@AGENTS.md` and `@LESSONS.md`. Nothing else. It exists so an agent
+that loads `CLAUDE.md` starts from the same entry file, not from a second one.
 
 ### `LESSONS.md`
 
@@ -249,13 +268,11 @@ or push to main.
 - If the full suite runs in CI, say so and record the run at the pushed head;
   do not print a passing full-suite line you did not run.
 
-### `.agents/skills/<project>-coding/SKILL.md`
+### No per-project coding skill
 
-- Frontmatter with a routing description that names the project.
-- Read order pointing at the repo docs.
-- Exact commands, copied from `verify.sh`, not re-invented.
-- Local invariants and "never touch" paths.
-- A link back to `docs/code-standards.md` instead of a copy of it.
+A skill file that repeats the commands and the first read doubles that read and
+drifts from `AGENTS.md`. If an agent host needs a skill to start, make it a
+two-line pointer to `AGENTS.md`, like `CLAUDE.md`. Keep the entry in one place.
 
 ### `.agents/skills/test-<project>-app/SKILL.md`
 

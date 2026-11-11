@@ -22,6 +22,14 @@ not_run() {
   printf 'NOT RUN: %s\n' "$*"
 }
 
+section "commit convention"
+# Every commit in the range being pushed must match
+#   <type>(<scope>): <subject>
+# with type in feat|fix|perf|docs|refactor|test|build|ci|chore|revert, and a
+# behavior change may not hide under chore. Fill the project's own lint.
+# Example: npx commitlint --from origin/main --to HEAD
+todo "commit convention check is not configured"
+
 section "changed-scope check"
 # Format, lint, typecheck affected packages and their dependents, and run the
 # tests beside the changed files. This is for iteration, not the merge gate.

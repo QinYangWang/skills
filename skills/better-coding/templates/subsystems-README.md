@@ -2,8 +2,9 @@
 # Subsystem design references
 
 These pages describe current responsibilities, runtime paths, state and
-contracts. Start with the subsystem relevant to your task, then follow its
-source links to verify the implementation you change.
+contracts. You arrive here from the route table in `AGENTS.md`: read the one
+page your task names, then follow its source links to verify the implementation
+you change. Do not read the rest of the tree.
 
 | Subsystem | Reference | Source |
 | --- | --- | --- |

@@ -5,7 +5,8 @@
 <PROJECT>'s code is written, reviewed, merged and released by agents. Each
 night the day's merged work is reviewed for what had to be fixed again, what
 should not have merged and what was verified too thinly. What we learned is
-kept here. Read this before changing code.
+kept here. Search it for the area and the symptom before changing code; do not
+read it end to end.
 
 Each lesson is a rule, then why, then the evidence. `Seen N×` counts the
 separate days a review found it. A lesson seen on **3 or more separate days**
