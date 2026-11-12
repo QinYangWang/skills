@@ -52,6 +52,18 @@ section "real use"
 #   not_run "Windows real-use check (no Windows box in CI)"
 todo "real-use check is not configured"
 
+section "project skills"
+# A generated skill may not ship placeholders, and every skill the entry names
+# must be where it says it is. Wire a skill's doctor command in here when it is
+# cheap and read-only.
+if [ -d .agents/skills ]; then
+  if grep -rn 'FILL\|<PROJECT>' .agents/skills --include='SKILL.md'; then
+    printf 'unfilled placeholder in a project skill\n' >&2
+    exit 1
+  fi
+  printf 'skills: %s installed\n' "$(find .agents/skills -name SKILL.md | wc -l | tr -d ' ')"
+fi
+
 # Optional: if the repo measures the agent-facing context (AGENTS.md, skills,
 # tool schemas), run that budget check here. It is a test, not a suggestion.
 

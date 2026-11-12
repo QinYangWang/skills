@@ -14,6 +14,21 @@ callers and the services it owns.>
 - [`<path/to/file>`](<relative link>) — <what it owns>.
 - [`<path/to/file>`](<relative link>) — <what it owns>.
 
+## Index of this area
+
+What an agent should know before reading the code. One line each; link, do not
+paste. This is the second hop from `AGENTS.md`, so it must land on a file, not
+on another index.
+
+| What | Where | Why it matters |
+| --- | --- | --- |
+| `<concept or file>` | [`<path>`](<relative link>) | <one line> |
+
+## Commands for this area
+
+- `<test command>` — <what it covers>.
+- `<build or run command>` — <what it starts>.
+
 ## Main runtime paths
 
 1. <Entry point> → <caller> → <state write> → <side effect>.
@@ -49,6 +64,23 @@ data written by an older version.>
 - `<command>` — <what it proves>.
 - `<test name>` — <which behavior it guards>.
 - Real use: <account/config/binary/sandbox recipe>.
+
+## Known failure modes
+
+The two or three ways this area has broken before. Read these before changing
+anything here; each links to the postmortem that produced it.
+
+| Failure | What it looked like | Postmortem | Review |
+| --- | --- | --- | --- |
+| <symptom> | <one line> | `P-00x` | `R-xx` |
+
+## Decisions
+
+Settled by the owner. Append only; an agent that needs to reverse one stops and
+asks.
+
+- `D-<area>-1` — <what is settled>. (<owner>, <date>). Why: <one line>. Forbids:
+  <what a change may no longer do>.
 
 ## Open questions
 

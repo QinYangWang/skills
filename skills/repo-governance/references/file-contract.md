@@ -1,14 +1,16 @@
 # File contract
 
-The loop needs four layers. Each layer has one job; when a file starts doing
+The loop needs five layers. Each layer has one job; when a file starts doing
 another layer's job, it grows into a document nobody reads.
 
 | Layer | File | Job |
 | --- | --- | --- |
-| Router | `AGENTS.md` | Which doc owns this task, and which commands run. |
-| Memory | `LESSONS.md` | What recent work got wrong, with evidence. |
-| Law | `docs/code-standards.md` | Rules a reviewer checks, plus acceptance criteria. |
-| Proof | `scripts/verify.sh` and tests | The commands that make the rules executable. |
+| Index | `AGENTS.md` | Where each area's page is, which commands run repo-wide, and which document owns this task. It holds no area facts and no rule text. |
+| Area | `docs/subsystems/<area>.md` | What one area owns, how it is entered, its own commands and index, its known failure modes, and its decisions. An area's facts live here. |
+| Law | `docs/code-standards.md` | Rules a reviewer checks, each traced to a decision, a postmortem or an issue. |
+| Constraints | `D-<area>-<n>` in the area page | What the owner settled, why, and what it forbids. |
+| Memory | `LESSONS.md` | What recent work got wrong, with evidence and the review question it produced. |
+| Proof | `scripts/verify.sh`, tests, project skills | The commands that make the rules executable. |
 
 ## Complete file list
 
@@ -27,7 +29,9 @@ when the project has that problem.
 | `scripts/verify.sh` | Required | One command for the local gates: commit lint, fast changed-scope check, tests, real-use check, not-run report. The full suite may run in CI; the script must say where. | On demand: run it, do not read it. | A command or environment requirement changes. | ≤ 100 lines |
 | Nightly job (cron, scheduled workflow or local command) | Recommended | Runs the review prompt from the last `reviewed-through` SHA and opens a PR. | Daily, after the day's merges. | The schedule, range or prompt changes. | One job |
 | `docs/nightly-review.md` | Required | The nightly prompt, range, output rules and the local command. | When running or changing the review. | The review rules or scheduler change. | ≤ 80 lines |
-| `.agents/skills/test-<project>-app/SKILL.md` | Optional | Real-client verification skill: start the app in isolated state, drive the affected flow with the product's own tools, capture before/after, retain for the user, stop only what you started. | On demand: a UI or integration change. | The app's test harness or surfaces change. | ≤ 120 lines |
+| `.agents/skills/verify-<project>/SKILL.md` + `features/` | Optional | Real-client verification: launch in isolated state, doctor the instance, drive a mapped user journey, capture evidence, clean up what you started. | On demand: a user-facing change. | The app's surfaces, ports, harness or seed data change; a feature is added or retired. | ≤ 120 lines, + one file per feature |
+| `.agents/skills/repro-<project>/SKILL.md` | Optional | Turn a report into a test that fails on the base and stays as a guard: capture the report as data, choose the lowest failing layer, prove it red, keep it. | On demand: a report says something broke, before a fix exists. | The test layout or the base-branch convention changes. | ≤ 80 lines |
+| `.agents/skills/release-<project>/SKILL.md` | Optional | Build and open the artifact users install, publish from the verified commit, confirm the published version from outside, roll back. | On demand: cutting a release. | The packaging, store or version source changes. | ≤ 80 lines |
 | `docs/surface-matrix.md` | Optional | The surfaces a change must consider: entry points, clients, providers, agents, contracts, reverse states, connection modes, docs. | Before a cross-surface change. | A surface is added or removed. | ≤ 60 lines |
 | `evals/` | Optional | Real-model cases for prompts, tool descriptions, generated titles and other model-facing text. | When model-facing text changes. | A new case, model or grader. | 3–7 cases to start |
 | Agent context budget (`<context-budget.json>` or equivalent) + measuring test | Optional | Byte budget for the text the model loads up front; a test keeps it equal to the measured text; CI fails on growth. | When the entry file or skills grow. | The owner approves growth, or text shrinks. | One file + one test |
@@ -128,9 +132,14 @@ magpie-like/
 │   └── verify.sh
 ├── .agents/
 │   └── skills/
-│       ├── magpie-coding/
+│       ├── verify-magpie/          # optional, a user drives this product
+│       │   ├── SKILL.md
+│       │   └── features/
+│       │       ├── README.md
+│       │       └── threads.md
+│       ├── repro-magpie/           # optional, reports arrive
 │       │   └── SKILL.md
-│       └── test-magpie-app/       # optional, real-client verification
+│       └── release-magpie/         # optional, an artifact ships
 │           └── SKILL.md
 └── .github/
     ├── pull_request_template.md
@@ -151,10 +160,14 @@ is enough; the prompt is the part that matters. See
 It is the only file an agent reads before starting, so it carries what the first
 edit needs and links the rest.
 
-- A harness stamp on the line after the title: `<!-- repo-governance harness: v2 -->`.
+- A harness stamp on the line after the title: `<!-- repo-governance harness: v3 -->`.
   It is read only by a later run, never at work time.
 - One paragraph: who writes, reviews, merges and releases; what this repo is;
   and that this file is the whole first read.
+- The alignment rule, before anything else: restate the goal, the smallest change
+  that delivers it and how it will be judged; ask only what a run cannot answer
+  and a product call; wait before irreversible, public, cross-area or new-surface
+  work.
 - Project facts: stack, build, fast check, full suite **and where it runs**,
   commit-header lint, real-use check, branches, platforms, release command.
 - The loop in six one-line steps: branch, reproduce, map, change, prove, record
@@ -163,6 +176,13 @@ edit needs and links the rest.
   break (about ten bullets), not the full rule table.
 - Route by task: at most one document per task, and how to read it (`LESSONS.md`
   — search; `docs/code-standards.md` — grep; `scripts/verify.sh` — run).
+- **An index of areas, not a description of them.** One row per area: what it
+  owns and the path to its page. No per-area commands, no file list, no rule
+  text — those belong on the area page. An index row whose page does not exist
+  is deleted or built, never left dangling.
+- A `## Project skills` table: at most three rows, command not prose, each
+  naming when to run it and where it lives. Skip it only when no preset applies,
+  and then say why in one line.
 - Branches and commits: target branch per change kind, header format, footer
   links, generated changelog.
 - The evidence rule: what a commit body must contain, and which evidence type
@@ -185,13 +205,17 @@ that loads `CLAUDE.md` starts from the same entry file, not from a second one.
 ### `LESSONS.md`
 
 - `<!-- reviewed-through: <sha> (<date>) -->` at the top.
-- One paragraph: who writes/reviews/merges, what this file is, and the
-  promotion rule.
+- One paragraph: it is searched by area, not read end to end, and it is where a
+  rule is born — the current version of each rule lives in
+  `docs/code-standards.md`.
 - Categories that match how the project fails (reading the report, fix the
   class, user files, verification, concurrency, red tests, merging/releasing).
-- Entries in the format in `references/lesson-loop.md`.
+- Each entry: the rule, its evidence, its `tags:` line (area and symptom
+  words), its `layer:` (process, code, permissions, docs), and the
+  `Review: R-xx` row it produced. Format in `references/lesson-loop.md`.
 - A `Moved to the code standards` section with links to the promoted rules.
-- `Done right` examples, because agents copy what they see.
+- Entries whose rule is now a guard test keep one line naming the test and
+  nothing else; the test is the lesson.
 
 It must **not** contain generic advice ("write clean code"), unverified claims,
 duplicates of the code standards, or a lesson with no commit/issue/date.
@@ -200,15 +224,17 @@ duplicates of the code standards, or a lesson with no commit/issue/date.
 
 - Opening: these rules come from this project's reviews; a reviewer checks each
   one and names the rule in the comment.
-- Tables of `Rule | What a reviewer looks at`. One row per rule, phrased as a
-  behavior, not a slogan.
+- Tables of `Rule | What a reviewer looks at | Source`. One row per rule,
+  phrased as a behavior, not a slogan. The source is `D-<area>-<n>`, `P-00x` or
+  an issue; a row with no source is deleted rather than debated.
 - A tests section: red check, break check, no network, real inputs, behavior
   not implementation, red on main, teardown, timing room, one layer (the lowest
   that fails on main), extend before add, and no unreasoned skip.
 - The evidence matrix: test for logic, capture for visual, transcript for
   server-only, eval/context budget for model-facing.
-- Acceptance criteria: numbered, runnable, and explicit about what does not
-  count.
+- Acceptance criteria: grouped by change kind (fix, feature, refactor, docs,
+  dependency, release), each numbered and runnable, and explicit about what does
+  not count. A change reads only its own group.
 - Review checklist: what the reviewer does, not only what they read.
 - Commit and merge rules.
 
@@ -228,6 +254,17 @@ it, configure the tool and link to it; do not spend a rule on it.
 
 ### `docs/subsystems/<area>.md`
 
+- **Its own index**: the files and concepts worth knowing inside this area, one
+  line each, linked. This is the second hop an agent makes; it must not send
+  anyone to a third page to find a file.
+- **Its own commands**: how to build, test and run only this area. The index
+  file holds repo-wide commands only.
+- **Known failure modes**: two or three, each linked to its `P-00x` postmortem.
+  An agent changing this area reads these before the code, because it is
+  already reading this page.
+- **Decisions**: `D-<area>-<n>` — what was settled, the date, who decided, why,
+  and what it forbids. Entries are append-only; reversing one is an owner
+  decision, not an agent choice.
 - Responsibilities and boundaries.
 - Source of truth: files and named symbols.
 - Main runtime paths: entry point to side effect.
@@ -274,14 +311,26 @@ A skill file that repeats the commands and the first read doubles that read and
 drifts from `AGENTS.md`. If an agent host needs a skill to start, make it a
 two-line pointer to `AGENTS.md`, like `CLAUDE.md`. Keep the entry in one place.
 
-### `.agents/skills/test-<project>-app/SKILL.md`
+### The three presets
 
-Only when the product has a UI or a real integration surface worth verifying
-through the product itself. Cover: how to start the app in isolated worktree
-state, how to read the real ports/pairing URL, the free replay/fixture path
-before a paid model, the flow to exercise, what evidence to capture, how to
-retain the environment for the user, and how to stop only the processes the
-agent started. See `templates/verification-skill-SKILL.md`.
+A preset is a proof skill: it holds commands the entry cannot, and it does not
+restate a rule. Install one only when its failure mode exists, then run it once.
+The catalog, placement, stamps and upgrade rules live in `skill-presets.md`.
+
+- `verify-<project>` — for a driveable surface. Launch on isolated state, a
+  read-only doctor, a drive recipe with real handles, evidence standards,
+  cleanup that keeps the proof, and a `features/` map of the journeys. A proof
+  that drives one convenient entry point is incomplete when the map lists
+  others. Template: `templates/skills/verification-SKILL.md`.
+- `repro-<project>` — for incoming reports. The report as data, the lowest
+  failing layer, a red on the base with real output, the test kept as a guard,
+  and the list of what was ruled out. Template: `templates/skills/repro-SKILL.md`.
+- `release-<project>` — for published artifacts. Build the artifact, open it
+  against old data, publish from the verified commit, install it from the public
+  source, roll back without re-tagging. Template: `templates/skills/release-SKILL.md`.
+
+A v2 `test-<project>-app/` is the verify preset under its old name. Keep the
+directory; add its stamp.
 
 ### `docs/surface-matrix.md`
 
@@ -325,6 +374,10 @@ Before calling the setup complete:
 - `docs/code-standards.md` contains no rule that a reviewer cannot check.
 - Each subsystem reference links to files that exist.
 - `scripts/verify.sh` runs from the repo root and fails on a deliberate break.
+- Each installed skill carries a preset stamp, has no `FILL` or `<PROJECT>` left,
+  and was executed once end to end; its doctor command runs from the repo root.
+- `AGENTS.md` routes to every installed skill, and every skill path it names
+  exists.
 - If a context budget exists, its test passes and CI would fail on growth.
 - If a surface matrix exists, every row has a decision and verification.
 - If review agents exist, each has one concern, explicit scope and a budget.

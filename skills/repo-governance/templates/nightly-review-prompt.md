@@ -34,6 +34,17 @@ commits touched.
 
 ## For each merged change, ask three questions
 
+After the three, ask two questions about the harness itself:
+
+- **Which area page should have been read and was not?** A page that keeps
+  missing its moment is mis-titled, mis-routed, or not worth keeping.
+- **Which review row should have caught this and does not exist yet?** That is
+  the row the lesson produces; a lesson without one is not finished.
+
+Do not report a hit rate, a percentage, or an estimated saving. Count what
+happened: entries added, sightings, days.
+
+
 ### 1. Did this have to be fixed again?
 
 Look for a later commit, revert, issue or PR that fixes the same behavior. Check

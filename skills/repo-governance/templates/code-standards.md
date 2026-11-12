@@ -14,44 +14,61 @@ longer applies; do not carry it as decoration.
 
 ## What a change contains
 
-| Rule | What a reviewer looks at |
-| --- | --- |
-| A change does only what its goal needs. | Every behavior change has a reason. Unrelated refactors, extra features and policy changes go in their own change. |
-| A change sits on the branch its kind belongs to. | A fix on `<stable>`, new surface on `<next minor>`, a break behind the owner. A branch with two kinds is split before review. |
-| A fix adds no new surface. | No new option, export, flag or config key inside a bug fix. New surface names its approved design note and ships in the minor line. |
-| A fix contains no stylistic refactor. | No reformat, rename or reorganisation. A refactor names its measured reason and goes alone; formatting belongs in the formatter. |
-| A fix covers exactly the cases it means to. | Which cases change, and which neighboring ones stay the same. Different errors are not handled as one. |
-| A change holds on the whole path. | Follow it from the user's input to the end result, through callers, state and side effects. One correct function does not make the operation correct. |
-| A fix reaches every sibling of the bug. | Grep for the same pattern: every route, command, provider, platform branch, guard and caller of a changed predicate. If a sibling is left alone, file it in the same change and name it. |
-| A change re-derives everything built on what it changes. | When a formula, list, layout breakpoint, timing or saved format changes, find every caller, saved copy and test that assumed the old meaning, and run it. |
-| A failed read, parse or hash means "unknown". | It never means "empty", "none" or "equal". Keep the last good value, copy the unreadable file aside before writing over it, and fix the shared reader rather than writing a strict one beside it. A guard list fails closed. Test with the file unreadable, truncated and corrupt. |
-| The project's default never overrides a value the user set. | Before writing a setting, list every place it is read. Test with a user-set value present. A migration names the users who set it and leaves their value alone, or says why not. |
-| Another app's values come from that app. | Take each field's type, unit, default and URL from that app's own data, binary, merge code or docs. A plausible field name is not a contract. |
-| Nothing that can block runs under a lock its reader needs. | Never send on a channel or call something that can block while holding a lock the receiver takes first. Set shared state before the handoff. A fake's handler runs on many goroutines: guard what it records. |
-| Checks cover the edges the change touches. | Numbers: boundaries. Paths: each platform. Concurrency: races and stale state. Pick checks by risk. |
+Every row names its source: a decision (`D-<area>-<n>`), a postmortem (`P-00x`)
+or an issue. A rule with no source is generic advice; delete it instead of
+debating it.
+
+| Rule | What a reviewer looks at | Source |
+| --- | --- | --- |
+| A change does only what its goal needs. | Every behavior change has a reason. Unrelated refactors, extra features and policy changes go in their own change. `← <D-… / P-00x / #issue>` |
+| The smallest complete change wins. | Ask in order: does it need to exist, is it already here, does the platform give it, is it an installed dependency, is it one line, then the minimum. Never cut validation at trust boundaries, error handling that prevents data loss, security or accessibility. | `← <D-… / P-00x / #issue>` |
+| A change sits on the branch its kind belongs to. | A fix on `<stable>`, new surface on `<next minor>`, a break behind the owner. A branch with two kinds is split before review. `← <D-… / P-00x / #issue>` |
+| A fix adds no new surface. | No new option, export, flag or config key inside a bug fix. New surface names its approved design note and ships in the minor line. `← <D-… / P-00x / #issue>` |
+| A fix contains no stylistic refactor. | No reformat, rename or reorganisation. A refactor names its measured reason and goes alone; formatting belongs in the formatter. `← <D-… / P-00x / #issue>` |
+| A fix covers exactly the cases it means to. | Which cases change, and which neighboring ones stay the same. Different errors are not handled as one. `← <D-… / P-00x / #issue>` |
+| A change holds on the whole path. | Follow it from the user's input to the end result, through callers, state and side effects. One correct function does not make the operation correct. `← <D-… / P-00x / #issue>` |
+| A fix reaches every sibling of the bug. | Grep for the same pattern: every route, command, provider, platform branch, guard and caller of a changed predicate. If a sibling is left alone, file it in the same change and name it. `← <D-… / P-00x / #issue>` |
+| A change re-derives everything built on what it changes. | When a formula, list, layout breakpoint, timing or saved format changes, find every caller, saved copy and test that assumed the old meaning, and run it. `← <D-… / P-00x / #issue>` |
+| A failed read, parse or hash means "unknown". | It never means "empty", "none" or "equal". Keep the last good value, copy the unreadable file aside before writing over it, and fix the shared reader rather than writing a strict one beside it. A guard list fails closed. Test with the file unreadable, truncated and corrupt. `← <D-… / P-00x / #issue>` |
+| The project's default never overrides a value the user set. | Before writing a setting, list every place it is read. Test with a user-set value present. A migration names the users who set it and leaves their value alone, or says why not. `← <D-… / P-00x / #issue>` |
+| Another app's values come from that app. | Take each field's type, unit, default and URL from that app's own data, binary, merge code or docs. A plausible field name is not a contract. `← <D-… / P-00x / #issue>` |
+| Nothing that can block runs under a lock its reader needs. | Never send on a channel or call something that can block while holding a lock the receiver takes first. Set shared state before the handoff. A fake's handler runs on many goroutines: guard what it records. `← <D-… / P-00x / #issue>` |
+| Checks cover the edges the change touches. | Numbers: boundaries. Paths: each platform. Concurrency: races and stale state. Pick checks by risk. `← <D-… / P-00x / #issue>` |
 
 ## Tests
 
-| Rule | What a reviewer looks at |
-| --- | --- |
-| A fix comes with a test that fails without it. | Put the old code back and run the new test. It must fail with a real `FAIL` that names the behavior. A compile error or a skip does not count. Say what it failed with. |
-| A test never reaches the network. | A vendor is served by a local fake built from real bytes. A package comes from a lock file, not a registry's latest. Break the change and watch where the test's requests go. |
-| Tests use real inputs. | Fixtures look like real requests, real serialized output and real files on disk, including missing fields, empty values and defaults. |
-| Tests check behavior, not implementation. | Assert what the user or caller needs. Formatting and internal refactors should not break a test unless exact bytes are the requirement. |
-| A test sits at one layer. | The lowest layer that fails on `main`. Do not repeat the case in a wrapper, at each call site, or in web and mobile copies of the same logic. |
-| Extend before adding. | If an existing test or table covers the behavior, add a row or an assertion there. Write a new `it` only when no case fits. |
-| A test waits for state, not time. | No sleep, polling loop, per-test timeout, retry or wall-clock delta. Await the event, queue or drain the worker. A test that needs a timeout to pass is wrong. |
-| A skip names a tracking issue. | `it.skip` and friends need `// quarantine: #1234 <why>` on the line above. Flaky tests are fixed, not retried. |
-| Review asks for less, not more. | Ask for a missing test only when it would catch a real regression. Do not ask for one assertion per constant, label or `switch` case. A test-review agent may ask for fewer or smaller tests, never more coverage. |
-| A test that fails on main is a bug to fix now. | "Fails the same on origin/main" is not a baseline. Fetch main, name the SHA, and fix or file the cause before shipping on top of it. |
-| Whatever a test starts ends when it does. | A fake process, goroutine or async refresh is stopped or waited for before the test returns, or it writes into the next test. |
-| A timing test leaves room on both sides. | Never bound a test by wall-clock time a loaded runner can exceed. Reproduce a timing failure by injecting the delay, not by rerunning until it fails. |
+| Rule | What a reviewer looks at | Source |
+| --- | --- | --- |
+| A fix comes with a test that fails without it. | Put the old code back and run the new test. It must fail with a real `FAIL` that names the behavior. A compile error or a skip does not count. Say what it failed with. `← <D-… / P-00x / #issue>` |
+| A test never reaches the network. | A vendor is served by a local fake built from real bytes. A package comes from a lock file, not a registry's latest. Break the change and watch where the test's requests go. `← <D-… / P-00x / #issue>` |
+| Tests use real inputs. | Fixtures look like real requests, real serialized output and real files on disk, including missing fields, empty values and defaults. `← <D-… / P-00x / #issue>` |
+| Tests check behavior, not implementation. | Assert what the user or caller needs. Formatting and internal refactors should not break a test unless exact bytes are the requirement. `← <D-… / P-00x / #issue>` |
+| A test sits at one layer. | The lowest layer that fails on `main`. Do not repeat the case in a wrapper, at each call site, or in web and mobile copies of the same logic. `← <D-… / P-00x / #issue>` |
+| Extend before adding. | If an existing test or table covers the behavior, add a row or an assertion there. Write a new `it` only when no case fits. `← <D-… / P-00x / #issue>` |
+| A test waits for state, not time. | No sleep, polling loop, per-test timeout, retry or wall-clock delta. Await the event, queue or drain the worker. A test that needs a timeout to pass is wrong. `← <D-… / P-00x / #issue>` |
+| A skip names a tracking issue. | `it.skip` and friends need `// quarantine: #1234 <why>` on the line above. Flaky tests are fixed, not retried. `← <D-… / P-00x / #issue>` |
+| Review asks for less, not more. | Ask for a missing test only when it would catch a real regression. Do not ask for one assertion per constant, label or `switch` case. A test-review agent may ask for fewer or smaller tests, never more coverage. `← <D-… / P-00x / #issue>` |
+| A test that fails on main is a bug to fix now. | "Fails the same on origin/main" is not a baseline. Fetch main, name the SHA, and fix or file the cause before shipping on top of it. `← <D-… / P-00x / #issue>` |
+| Whatever a test starts ends when it does. | A fake process, goroutine or async refresh is stopped or waited for before the test returns, or it writes into the next test. `← <D-… / P-00x / #issue>` |
+| A timing test leaves room on both sides. | Never bound a test by wall-clock time a loaded runner can exceed. Reproduce a timing failure by injecting the delay, not by rerunning until it fails. `← <D-… / P-00x / #issue>` |
 
 ## Acceptance criteria
 
-A change is merged or released only when it shows each of the following. Say
-which ones were run and what they printed. A check that was not run is listed
-as **not run**, never left out.
+Items 1–7 apply to every change. Then add the line for your change kind, and
+check only that one — a fix does not answer a feature's list.
+
+- **Fix** — the reporter's exact case reproduced on their surface; the same
+  pattern fixed in every sibling; no new surface and no drive-by rename.
+- **Feature** — design note approved; the new path's error, empty and
+  permission-denied states exercised; the docs for the new surface exist; a test
+  at the lowest failing layer.
+- **Refactor** — behavior preserved, with evidence that names each contract kept;
+  no formatting noise; the measured reason for the change named.
+- **Docs** — every command and link executed; no claim the code contradicts.
+- **Dependency** — why the project cannot do it itself, license, exact pin,
+  rollback path.
+- **Release** — the artifact users install was opened; every version string
+  matches what was published.
 
 1. **A test that fails without the change.** Put the old code back and run the
    new test. It must fail with a real `FAIL` that names the behavior. Then
@@ -140,4 +157,4 @@ evidence in the review notes or the linked lesson. Delete this comment. -->
 
 | Rule | What a reviewer looks at |
 | --- | --- |
-| <Rule from a promoted lesson.> | <The check a reviewer performs.> |
+| <Rule from a promoted lesson.> | <The check a reviewer performs.> `← <D-… / P-00x / #issue>` |
