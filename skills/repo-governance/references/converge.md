@@ -11,12 +11,19 @@ each file is for. Use `../templates/`.
 ## 0. Detect the state
 
 Read `AGENTS.md` if it exists; otherwise treat the repo as empty. The stamp on
-the line under the title (`<!-- repo-governance harness: v2 -->`) is the only
+the line under the title (`<!-- repo-governance harness: v3 -->`) is the only
 version signal.
 
-A legacy `<!-- better-coding harness: v2 -->` stamp is the same harness v2: the
-skill was renamed, nothing else changed. Treat such a repo as current and
-rewrite the line to the new name on the next run.
+A `v2` stamp is an older harness: v3 adds the project skills layer, and the
+upgrade in section 2 installs the presets whose failure mode exists. A legacy
+`<!-- better-coding harness: v2 -->` stamp is the same harness v2 under the old
+skill name; treat it as v2 and rewrite the line as part of the v2 -> v3 upgrade.
+
+Project skills carry their own stamp, `<!-- repo-governance skill: <preset> v1 -->`.
+Detect them with the `find` in `SKILL.md` step 1 and give each one a state: no
+stamp (not ours), preset stamp current, preset stamp older. A v2
+`.agents/skills/test-<project>-app/` is the verify preset under its old name:
+same preset, keep the directory.
 
 | State | Signal | What this run does |
 | --- | --- | --- |
@@ -42,8 +49,10 @@ A fresh agent must be able to start from `AGENTS.md` alone:
 - it names the commands (fast check, full suite, real use);
 - it holds the rules that apply to every change;
 - it routes to at most one more document for the area being changed;
-- it does not require `LESSONS.md`, `docs/code-standards.md` or a subsystem
-  reference to be read before the first edit.
+- it does not require `LESSONS.md`, `docs/code-standards.md` or an area page
+  to be read before the first edit;
+- it is an index: area rows, repo-wide commands, routes. An area's facts,
+  commands and index live on that area's page, two hops from here.
 
 Every other file exists for a question the agent asks later. A file that must be
 read before starting is a bug in the entry file.
@@ -52,7 +61,7 @@ read before starting is a bug in the entry file.
 
 | # | Path | What it must contain | Done when |
 | --- | --- | --- | --- |
-| 1 | `AGENTS.md` | Entry: harness stamp, identity, commands (fast/full/real use), the rules in one screen, branch and commit rules, task-to-doc route table, evidence block, agent safety, human gates. ≤ 150 lines. | A fresh agent reaches the verify command and the owning doc from this file alone, in one read; the stamp names the current harness. |
+| 1 | `AGENTS.md` | Index: harness stamp, identity, the alignment rule, repo-wide commands, one row per area pointing at its page, routes to the four documents, agent safety, human gates. ≤150 lines, no area facts, no rule text. | A fresh agent reaches an area page and the verify command in one read; the stamp names the harness; nothing here belongs on a page. |
 | 2 | `LESSONS.md` | 3–8 real lessons (rule, evidence, fix, `Seen N×`), `reviewed-through` SHA, promotion rule. Header says: search it, do not read it end to end. | Every entry cites a commit/issue/owner decision. |
 | 3 | `docs/code-standards.md` | Reviewer-checkable rules, test rules, evidence matrix, acceptance criteria, commit and merge rules. Header says: grep the rule you need. | No rule is a slogan; every row says what a reviewer checks. |
 | 4 | `docs/subsystems/README.md` + 3–7 `docs/subsystems/<area>.md` | Map of high-risk areas; each reference has responsibilities, source links, runtime path, contracts, failure behavior, verification. | Every source link resolves; only non-obvious cross-component behavior is documented. |
@@ -66,17 +75,39 @@ read before starting is a bug in the entry file.
 | # | Path | Add it when | Done when |
 | --- | --- | --- | --- |
 | 9 | `docs/surface-matrix.md` | More than one client, entry point, provider, connection mode or reverse state. | Every row has applies/N/A, what changes, verification; N/A has a reason. |
-| 10 | `.agents/skills/test-<project>-app/SKILL.md` | There is a UI or integration surface worth driving through the product itself. | A real-client pass leaves the environment usable and the evidence attached. |
-| 11 | Agent context budget + measuring test | The model loads an entry file, skills or tool schemas up front and the text tends to grow. | Editing the budget alone fails; growth needs the owner's approval. |
-| 12 | `evals/` | The product has prompts, tool descriptions, generated titles or other model-facing text. | A case actually fails on the old text before passing on the new. |
-| 13 | `.github/review-agents/<concern>.md` | The repo uses AI review and needs one concern per agent. | A dry run finds only in-scope issues; empty review is unambiguous. |
-| 14 | `docs/contributors.md` + triage contract | Outside PRs arrive and policy must be enforced. | A missing policy file stops the run; PR text cannot change exemptions. |
-| 15 | `docs/contributing.md` + commit lint + generated changelog | More than one release line, outside contributors, or a changelog assembled from commits. | A feature opened against the stable line breaks the rule; a bad header fails the lint; the changelog regenerates from the range. |
-| 16 | `docs/plans/<date>-<slug>.md` | New API surface is proposed and needs approval before code. | The note names problem, surface, rejected alternatives, cost and migration, with the owner's approval. |
-| 17 | Release candidate pipeline | Releases are frequent and packaging is non-trivial. | The artifact users install was opened and executed before publishing. |
+| 10 | `.agents/skills/verify-<project>/SKILL.md` + `features/` | A user drives a surface: web UI, CLI/TUI, desktop app, service endpoint. | Launch, doctor and one mapped journey ran here; the evidence survived cleanup. |
+| 11 | `.agents/skills/repro-<project>/SKILL.md` | Reports arrive, or fixes land without a failing test first. | Its steps produced a red on the base, and the test stayed as a guard. |
+| 12 | `.agents/skills/release-<project>/SKILL.md` | The repo publishes an artifact users install. | The artifact was built, opened against old data, and installed from its public source. |
+| 13 | Agent context budget + measuring test | The model loads an entry file, skills or tool schemas up front and the text tends to grow. | Editing the budget alone fails; growth needs the owner's approval. |
+| 14 | `evals/` | The product has prompts, tool descriptions, generated titles or other model-facing text. | A case actually fails on the old text before passing on the new. |
+| 15 | `.github/review-agents/<concern>.md` | The repo uses AI review and needs one concern per agent. | A dry run finds only in-scope issues; empty review is unambiguous. |
+| 16 | `docs/contributors.md` + triage contract | Outside PRs arrive and policy must be enforced. | A missing policy file stops the run; PR text cannot change exemptions. |
+| 17 | `docs/contributing.md` + commit lint + generated changelog | More than one release line, outside contributors, or a changelog assembled from commits. | A feature opened against the stable line breaks the rule; a bad header fails the lint; the changelog regenerates from the range. |
+| 18 | `docs/plans/<date>-<slug>.md` | New API surface is proposed and needs approval before code. | The note names problem, surface, rejected alternatives, cost and migration, with the owner's approval. |
+| 19 | Release candidate pipeline | Releases are frequent and packaging is non-trivial. | The artifact users install was opened and executed before publishing. |
 
 Do not add a conditional file because the tree looks symmetric. Add it when the
 failure mode is present, and say which one in the handoff.
+
+### The project skills
+
+Docs say what a change must prove; a skill is how an agent proves it without
+improvising. Install the presets whose failure mode exists, from the catalog in
+`skill-presets.md`, using `templates/skills/`:
+
+- `verify-<project>` for a driveable surface, with `features/` seeded from the
+  routes, commands or menus you actually found;
+- `repro-<project>` when reports arrive or fixes keep landing without a red test;
+- `release-<project>` when an artifact ships.
+
+Every command in a skill must have run in this repo. Replace every `<PLACEHOLDER>`
+and `FILL`; a placeholder left in a generated skill is a failed build, not a TODO.
+Execute each skill once — launch, doctor, one mapped journey, capture, cleanup —
+before you route the entry at it. A preset whose failure mode is absent is not
+installed, and the report says why.
+
+One folder per repo. A repo with `verify-*` in two harness folders has two
+entries by the back door.
 
 ### Fill them
 
@@ -108,9 +139,10 @@ rule would have caught this? If the answer is "be more careful", it is not a
 lesson. Keep only entries with a commit, issue, PR, CI run or owner decision. Do
 not invent history; a new repo may start with no seeded lessons.
 
-**Write in this order:** subsystem references; code standards; lessons; the entry
-file last, so it routes to what exists; `verify.sh`; `CLAUDE.md` and the PR
-template; the nightly prompt; the conditional files that apply.
+**Write in this order:** subsystem references; code standards; lessons; the
+project skills and their feature maps; the entry file last, so it routes to what
+exists; `verify.sh`; `CLAUDE.md` and the PR template; the nightly prompt; the
+conditional files that apply.
 
 Use the templates, fill real commands and evidence, and remove every `FILL`
 comment and placeholder row with no rule behind it.
@@ -126,7 +158,8 @@ conventions.
 | Harness | Contract | Upgrade by |
 | --- | --- | --- |
 | v1 | Two skills (`repo-governance` + `repo-governance-init`); the agent read `AGENTS.md`, one subsystem doc, `LESSONS.md` and `docs/code-standards.md` before editing; a per-project coding skill duplicated the entry; twelve rules; no branch model. | The v1 → v2 steps below. |
-| **v2 (current)** | One skill, one run. `AGENTS.md` is the only mandatory read and holds a one-screen rule digest; everything else is on demand; no per-project coding skill; sixteen rules; branch and commit gates; PR template names change kind, base branch and cost. | — |
+| v2 | One skill, one run. `AGENTS.md` is the only mandatory read and holds a one-screen rule digest; everything else is on demand; no per-project coding skill; sixteen rules; branch and commit gates; PR template names change kind, base branch and cost. | The v2 → v3 steps below. |
+| **v3 (current)** | v2 plus the skills layer: the run installs `verify-<project>` / `repro-<project>` / `release-<project>` where their failure mode exists, each with a preset stamp and a `FILL` gate in `verify.sh`; the entry carries a `## Project skills` table and routes to them. | — |
 
 ### Plan first
 
@@ -135,15 +168,41 @@ the owner when any row is a delete or a rename:
 
 ```
 Detected: harness v1 (no stamp; read-order section present; project skill found)
-Target:   v2
+Target:   v3 (v1 -> v2 -> v3 in one run)
 | File | Action | Why |
 | AGENTS.md | rewrite entry sections, keep facts and gates | entry contract changed |
 | .agents/skills/x-coding/SKILL.md | delete | one entry, one first read |
 | CLAUDE.md | rewrite to two lines | shim, not a second entry |
 | LESSONS.md, docs/code-standards.md | add header line | on-demand markers |
 | verify.sh | add commit-lint step | new first gate |
+| .agents/skills/verify-x/ | build | a user drives the app; no skill proves it |
+| AGENTS.md | add project-skills table | entry routes to the skills |
 Left alone: docs/subsystems/*, lesson entries, docs/plans/*, project values, owner decisions.
 ```
+
+### v2 → v3
+
+Do these in order; a step that does not apply is skipped and said so.
+
+1. **Stamp.** `v2` and legacy `better-coding v2` become
+   `<!-- repo-governance harness: v3 -->`. No other line changes for the stamp.
+2. **Detect the repo's skill folder and its skills.** `find . -maxdepth 3 -type
+   d -name skills ...`, then read each `SKILL.md`'s stamp. A v2
+   `test-<project>-app/` is the verify preset under its old name: keep the
+   directory, add `<!-- repo-governance skill: verify v1 -->`, do not rename it.
+3. **Install the presets whose failure mode exists** (section 1, "The project
+   skills"). Fill them from real commands, seed `features/` for the verify
+   preset, and run each one once.
+4. **Route.** Add `## Project skills` to `AGENTS.md` — at most three rows, one
+   line each; `No project skill applies: <why>` when none does — and one task
+   route row per installed skill.
+5. **`verify.sh`.** Add the project-skills section: fail on `FILL` or
+   `<PROJECT>` left in a `SKILL.md`, and run a skill's doctor command where it is
+   cheap and read-only.
+6. **Validate.** Second run reports `already current` and `skills current`;
+   deleting a skill's only journey makes a gate or the skill itself fail.
+7. **Commit.** One commit for the harness and the skills layer:
+   `chore(repo-governance): converge harness v2 -> v3`.
 
 ### v1 → v2
 
@@ -167,7 +226,7 @@ Do these in order; a step that does not apply is skipped and said so.
 6. **verify.sh.** Add the commit-header lint step as the first gate.
 7. **Rules table.** Bring any locally added rule across; do not drop a project
    rule to fit the sixteen.
-8. **Stamp the current version** and validate.
+8. **Stamp v2, then continue with v2 → v3.** A v1 repo ends at v3, not at v2.
 
 ### Upgrade rules
 
@@ -181,8 +240,8 @@ Do these in order; a step that does not apply is skipped and said so.
 4. **Idempotent.** Running the whole procedure again must change nothing,
    because the stamp matches. If it plans changes again, the stamp or the plan is
    wrong.
-5. **One commit.** `chore(repo-governance): converge harness v1 -> v2`, body naming
-   the plan and what was left alone.
+5. **One commit.** `chore(repo-governance): converge harness v<old> -> v<current>`,
+   body naming the plan, the skills installed and what was left alone.
 6. **Owner gates hold.** Deleting a file, renaming the entry, touching CI or
    branch protection goes through the human gates in `SKILL.md`.
 7. **No inventing.** If an old file holds content the new shape has no home for,
@@ -190,9 +249,13 @@ Do these in order; a step that does not apply is skipped and said so.
 
 ## 3. Validate the run
 
-- **One-read trace.** From `AGENTS.md` alone, a reader reaches the owning
-  subsystem doc, the relevant lesson and the verify command. If they must open a
-  second file before the first edit, the entry file is wrong.
+- **Two-hop trace.** From `AGENTS.md`, through one area page, a reader reaches
+  the file to change, that area's commands, its failure modes and its decisions.
+  A third page means the area page is doing too little or the index too much.
+- **Traceability.** Every row in `docs/code-standards.md` cites `D-<area>-<n>`,
+  `P-00x` or an issue; every postmortem names the review row it produced; every
+  decision is dated and owned. A row with no source is generic advice and is
+  deleted.
 - **Harness stamp.** `AGENTS.md` carries the current stamp, so the next run knows
   whether anything is due.
 - **Commands.** `verify.sh` runs from the repo root. Every command in `AGENTS.md`
@@ -206,11 +269,14 @@ Do these in order; a step that does not apply is skipped and said so.
   guard.
 - **Bad-change test.** Make a plausible mistake (old value on an error path,
   skipped write, wrong unit) and confirm at least one gate catches it.
+- **Skills.** Each installed preset was executed once end to end; its stamp
+  matches its template; a pasted `FILL` fails the skills gate; the entry's
+  `## Project skills` table names a skill that exists at that path.
 - **Branch and commit gates, if added.** A feature opened against the stable line
   breaks the documented rule; a bad commit header fails the lint; the changelog
   regenerates from the same range.
-- **Second run.** Run the procedure again; it must report "already current" and
-  change nothing.
+- **Second run.** Run the procedure again; it must report "already current",
+  `skills current`, and change nothing.
 - **Nightly dry run.** Run the prompt against the last day; it must update
   `reviewed-through` and invent nothing.
 
@@ -231,6 +297,9 @@ Do these in order; a step that does not apply is skipped and said so.
 7. **No conditional deliverable without its failure mode.**
 8. **No second entry file.** A per-project skill that repeats `AGENTS.md` doubles
    the first read. Keep the entry in one place; `CLAUDE.md` is a two-line shim.
+9. **No skill without a run.** A preset that was never executed here is a draft;
+   a placeholder left in a generated skill is a failed build. Do not route the
+   entry at either.
 
 ## Adapting
 
@@ -242,6 +311,9 @@ Do these in order; a step that does not apply is skipped and said so.
   from the code, not the old wiki.
 - **Large/multi-surface:** add the surface matrix, real-client verification
   skill, fast/full split, context budget and scoped review agents.
+- **Already has skills:** keep the repo's folder and names. Convert only the
+  skills you would have installed, merge an unstamped one instead of replacing
+  it, and never leave two folders owning the same proof.
 - **More than one release line:** add the branch model, the target-branch table,
   the design-note gate, commit lint and a generated changelog.
 - **Model-facing:** add the context budget and evals.
@@ -253,6 +325,8 @@ Report:
 
 - the state detected and what was done to each file (built, upgraded, repaired,
   kept, moved);
+- the project skills installed: preset, path, the failure mode each catches, and
+  what you proved by running it; the presets skipped and why;
 - files created and why;
 - commands run, with result and duration;
 - lessons seeded, each with its evidence;
@@ -275,7 +349,8 @@ Use repo-governance on this repository.
    every project fact, lesson, subsystem reference and design note; never stop
    because a file already exists.
 3. Validate: one-read trace from AGENTS.md alone, verify.sh, a deliberate bad
-   change, a bad commit header, and a second run that reports "already current".
+   change, a bad commit header, each installed skill run once, and a second run
+   that reports "already current".
 4. Report what changed, what was left alone, and what the owner must decide.
 
 Do not invent a command, lesson or rule. Do not overwrite existing agent docs;

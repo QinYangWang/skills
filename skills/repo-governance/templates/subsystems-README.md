@@ -2,9 +2,13 @@
 # Subsystem design references
 
 These pages describe current responsibilities, runtime paths, state and
-contracts. You arrive here from the route table in `AGENTS.md`: read the one
-page your task names, then follow its source links to verify the implementation
-you change. Do not read the rest of the tree.
+contracts. You arrive here from the area table in `AGENTS.md`: read the one page
+your task names, follow its own index to the file you change, and verify against
+the source. Two hops, then code — a third page means this page is doing too
+little.
+
+Each area page owns its own facts: commands, index, known failure modes and
+decisions. Do not repeat them here, and do not move them into `AGENTS.md`.
 
 | Subsystem | Reference | Source |
 | --- | --- | --- |

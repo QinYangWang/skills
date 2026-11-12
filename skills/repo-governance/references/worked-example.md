@@ -230,6 +230,69 @@ func TestReadersNeverTurnFailureIntoEmpty(t *testing.T) {
 The lesson is removed from `LESSONS.md` and listed under
 `Moved to the code standards`, with the three dates and the guard test.
 
+## The index, the decision, the review row
+
+`AGENTS.md` holds one row for the cache and nothing else about it:
+
+```md
+| Cache and index | keeps the last good index, serves reads | docs/subsystems/cache.md |
+```
+
+`docs/subsystems/cache.md` owns the facts — its commands (`go test
+./internal/cache`), its own index (`internal/cache/index.go`,
+`internal/cache/store.go`), its failure modes and this decision:
+
+```md
+- `D-cache-1` — a corrupt index is never rewritten in place; the file is copied
+  aside and the last good index is served. (owner, 2026-02-11). Why: #412 lost
+  12k entries. Forbids: a repair path that overwrites the file it failed to read.
+```
+
+The postmortem from that incident produced one review row, which is the only
+reason the lesson is kept:
+
+```md
+| A failed read keeps the last good value. | The corrupt file is copied aside; nothing writes over a file it could not parse; test with file unreadable, truncated and corrupt. | `← P-002` |
+```
+
+Days later a reviewer asks "does the repair path overwrite in place?" without
+having read the postmortem. That is the loop working: the story became a
+question.
+
+## The project skills
+
+`AGENTS.md` routes a user-facing change to `verify-relayd` and a report to
+`repro-relayd`. Both were installed because the product has an HTTP API and a
+`relayd cache` CLI, and reports arrive as issues.
+
+`verify-relayd/SKILL.md`, trimmed to its facts:
+
+```md
+## Launch
+- `cp -a /var/lib/relayd /tmp/relayd-<run>` (one way), `RELAYD_HOME=/tmp/relayd-<run>`.
+- `go run ./cmd/relayd` from the worktree.
+- Ready when `curl -s localhost:8080/health | jq -e '.index == "loaded"'` is true.
+  A 200 alone is not ready: the index loads after the listener binds.
+
+## Drive
+- `curl -s localhost:8080/v1/cache/get?key=<seeded key> | jq -r .value`
+- CLI reverse state: `relayd cache verify --json`
+```
+
+One feature file, `features/cache-verify.md`: reach it with `relayd cache verify
+--json` or `GET /v1/cache/verify`; drive it with the two commands above;
+observable end state is `{"entries":12000,"index":"ok"}`.
+
+The first version of that skill used the plain `/health` 200 as its readiness
+check. Running it once showed a request answered before the index was loaded, so
+the check changed to the `.index == "loaded"` field. That detail would not have
+fit in the entry file, and reading the code had not revealed it.
+
+`repro-relayd` chose `internal/cache` as the lowest failing layer, because the
+report's symptom is a reader. Its step 5 report listed the product-level drive
+as the second half: truncate a copy of a real index, start the app, watch it
+serve 12k entries.
+
 ## What the example demonstrates
 
 - `AGENTS.md` routes; it does not contain the fix.
@@ -237,4 +300,13 @@ The lesson is removed from `LESSONS.md` and listed under
 - `LESSONS.md` catches the pattern across three unrelated readers.
 - `code-standards.md` gains a rule a reviewer can check, not a story.
 - The guard test makes the rule executable.
+- The reproduction lives at the layer that owns the behavior, so it survives the
+  branch and the next agent.
+- The index is a table of areas; the cache's facts live on the cache page, two
+  hops from the entry.
+- The decision is written where the change happens, so the next agent cannot
+  silently reverse it.
+- The postmortem survives as a review row, not as a story someone must remember.
+- The entry routes to a skill that was executed before it was handed over; its
+  readiness check was wrong until it ran.
 - The commit body is enough for a later reviewer to reconstruct what ran.

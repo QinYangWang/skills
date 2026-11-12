@@ -78,28 +78,47 @@ The lesson is a merge rule, not a blame statement.
 
 The lesson is a gate change: what must be run, and what must be written down.
 
+## Which layer did it come from
+
+Before writing the rule, name the layer. It picks the fix, and a fix in the
+wrong layer is why the same thing happens again.
+
+| Layer | Looks like | Fix |
+| --- | --- | --- |
+| `process` | A gate nobody ran, a review that asked the wrong question, a branch that carried two kinds. | Add or sharpen the review row; change the branch rule; make the step unavoidable. |
+| `code` | A shared reader that turns failure into empty, a lock held across a call, a fixture that encoded an assumption. | The smallest complete change plus a guard test at the lowest failing layer. |
+| `permissions` | An agent wrote where it should not, read a live state directory, acted on a credential it was given for one task. | A constraint: a path it may not touch, a command it may not run, an approval it must ask for. |
+| `docs` | The page said the old behavior, the decision was never written down, the map pointed at a file that moved. | One sentence, with the incident linked. Do not write a new document for it. |
+
+Most incidents have a code layer and a process layer. Fix the one whose absence
+let it ship, and say which one you did not fix.
+
 ## Entry format
 
 Keep one rule per entry. Put the rule first, in imperative form, then the
 evidence, then the fix and the done-right example, then the count.
 
 ```md
-**<One-sentence rule, imperative.>**
+**P-001 — <One-sentence rule, imperative.>**
 - <What happened: #issue / commit, the consequence.>
 - <What the fix was, or what would have caught it.>
 - Done right: <commit/issue where the rule was followed, optional.>
-- Seen 1× (YYYY-MM-DD).
+- Seen 1× (YYYY-MM-DD). `layer: <process|code|permissions|docs>`.
+- `tags: <area, symptom>` — the words an agent would type when it hits this.
+- Review: `R-xx` — the review row this entry produced.
 ```
 
 Example:
 
 ```md
-**A failed cache read means "unknown", not "a miss".**
+**P-002 — A failed cache read means "unknown", not "a miss".**
 - #412: `readIndex` returned `nil, nil` for a corrupt index; the writer treated
   it as empty and overwrote 12k entries (commit 9f2c1a).
 - Fix 4b7e0d reads the corrupt file aside and keeps the last good index.
 - Done right: 8c1d2e keeps the old index when the new one does not parse.
-- Seen 2× (2026-03-04, 2026-03-19).
+- Seen 2× (2026-03-04, 2026-03-19). `layer: code`.
+- `tags: cache, index, restart, empty-on-error`.
+- Review: `R-04` — "a failed read keeps the last good value".
 ```
 
 Rules for entries:
@@ -155,19 +174,26 @@ they see. A `Done right` entry is one line: the commit/issue, what was done, and
 which rule it demonstrates. Do not turn it into a praise section; it is
 training data for the next agent.
 
-## Budgets and pruning
+## Keeping it short
 
-- `LESSONS.md` ≤ 800 lines. If it grows past that, promote or merge duplicates
-  first; archive lessons not seen in 90 days into a linked archive file rather
-  than deleting the evidence.
-- `docs/code-standards.md` ≤ 250 lines. A standard nobody can hold in mind is a
-  standard nobody checks.
-- One rule, one home. If a rule is in both files, remove it from `LESSONS.md`.
-- A promoted rule that no longer applies is removed in a commit that says why.
-  Do not leave a dead rule to be cargo-culted.
+Length is controlled by promotion, not by a number. A notebook is long when it
+holds rules that are no longer current, and short when each entry has moved on.
 
-These budgets are operational advice, not magpie's published numbers; adjust
-them to the project, but keep a budget.
+- **Promotion removes an entry.** Three separate days and the rule lives in
+  `docs/code-standards.md`; `LESSONS.md` keeps a line under
+  `Moved to the code standards`.
+- **A guard test removes the body.** Once a test catches it, the entry keeps one
+  line naming the test. The test is the lesson; the prose is a duplicate.
+- **A constraint removes the reason to repeat it.** After a permissions or
+  process fix, the same mistake is blocked rather than remembered.
+- **Stale entries are archived, not deleted.** Not seen in 90 days and the rule
+  is either enforced or obsolete: move it to `Archived` with the number kept.
+- **One rule, one home.** If a rule is in both files, `LESSONS.md` holds the
+  history and the standards hold the current sentence.
+
+When the file feels long, the cause is almost always one of: duplicates, rules
+whose fix never landed, or entries written as stories. Fix the cause; do not
+compress the writing.
 
 ## Output
 
@@ -198,6 +224,8 @@ changes what every future review checks.
 | Performative review | Every night says "all good". | Review the reviewer: sample a known rework commit and see whether it was caught. |
 | Private context | Lessons refer to a chat nobody can read. | Cite commits/issues only. |
 | Promotion by vibe | A rule moves after one dramatic day. | Enforce three separate dates. |
+| Code-only fix | The same rule reappears after a code fix. | Name the layer; when the fault is process or permission, change that instead. |
+| Invented numbers | "Hit rate 92%", "saved 3k lines". | Count what happened: entries, sightings, days. Never estimate. |
 
 ## Verifying the loop itself
 
@@ -207,6 +235,6 @@ Once a month, take a change that had to be fixed again and check:
 - Did the resulting lesson name the rule that would have caught it?
 - Did the rule get promoted when it should have?
 - Did the promoted rule become a check, or is it still prose?
-- Is the notebook still under budget?
+- Does every entry from the last month point at a review row?
 
 If the loop cannot catch its own misses, fix the loop before adding more rules.
