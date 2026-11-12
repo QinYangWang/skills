@@ -1,110 +1,91 @@
 ---
 name: repo-governance
-description: Gives one repository the documents its agents read on demand — an index entry, per-area pages, review rules, decisions and postmortems — and keeps them current. Use when a repo has no harness, a partial one, a foreign AGENTS.md, or an older harness stamp.
+description: Writes the five documents an agent needs in a repository — an index, a collaboration guide, review rules, decisions and postmortems — and keeps them true. Use when a repo has no such docs, a partial or stale set, or an entry that claims a harness it does not have.
 ---
 
 # Repo Governance
 
-One run brings this repository to the shape below, then leaves it alone. It is a reference, not a compliance checklist.
+One run. Five files. Then the repository runs itself.
 
-## What this is not
+This is a reference, not a compliance checklist: every rule below names why it exists, and the run reports what it skipped.
 
-- **A default path, not a requirement.** Each deliverable below names when it is not needed. Skip one, and say why in the report.
-- **A policy the owner did not choose.** Branch rules, review rules and decisions come from the repo's CI, its history or its owner. Missing, ask; never invent.
-- **A documentation tree.** Five jobs, a handful of pages. A page nobody reads is a bug, not a deliverable.
+## What it writes
 
-## The shape
-
-| Job | File | Rule |
+| File | Job | One rule |
 | --- | --- | --- |
-| Index | `AGENTS.md` | One screen. What the repo is, the repo-wide commands, a table of areas pointing at their pages, and the routes to the four documents below. No rule text, no per-area commands, no history. |
-| Area | `docs/subsystems/<area>.md` | Each area maintains its own page: what it owns, its entry points, **its own commands and its own index**, its known failure modes, its decisions. An area's facts live here, never in the index. |
-| Law | `docs/code-standards.md` | Rules a reviewer checks. Every row names its source: `← D-003`, `← P-002` or `← #412`. A rule with no source is deleted. |
-| Constraints | `D-<area>-<n>` inside the area page | Decisions the owner made: what is settled, why, and what it forbids. An agent may not reverse one; if the task needs it, stop and ask. |
-| Postmortems | `LESSONS.md` | What went wrong, why, and **which review question now catches it**. Search it by area and symptom; never read it end to end. |
+| `AGENTS.md` | Index: what the repo is, the commands, one row per module, routes to the four documents, what needs the owner. | It points; it does not explain. |
+| `docs/COLLAB.md` | Which branch a change kind takes, how to develop, how to commit and open a PR. | One branch, one kind. |
+| `docs/REVIEW.md` | What a reviewer checks, by change kind. | Every row cites `D-###`, `P-###` or an issue. |
+| `docs/DECISIONS.md` | Settled choices: what, why, what it forbids, who, when. | Append-only. |
+| `docs/POSTMORTEMS.md` | What broke, why, which layer, and the review row it produced. | No row, no entry. |
 
-Two hard rules make the shape real:
+Modules keep their own docs and index: an existing `README.md`, `AGENTS.md` or `docs/modules/<module>.md`. `AGENTS.md` only points at them.
 
-1. **Every review rule traces to a decision or a postmortem.** A rule nobody's mistake or decision produced is generic advice.
-2. **Every postmortem produces one review question.** A postmortem entry with no `Review: R-xx` is unfinished, not filed.
+## Read this much
 
-Plus the mechanical ones:
-
-- The generated entry opens with alignment: restate the goal, the smallest change and the acceptance; ask only for product or preference calls; go on reversible single-area work; wait for anything irreversible, public, cross-area or new.
-- `CLAUDE.md` is two lines pointing at the index; there is no second entry and no per-project coding skill.
-- The commit body carries the evidence: red check, break check, full suite and where it ran, real use, not-run list.
-- `AGENTS.md` carries `<!-- repo-governance harness: v3 -->` on the line under the title. Project skills carry their own preset stamp. Stamps change only when the conventions do.
-- A second run reports `already current` and writes nothing.
-
-## State Gate
-
-Read `AGENTS.md`, then its stamp. No entry means the repo is empty.
-
-| State | Action |
-| --- | --- |
-| No harness, or some files without an entry | Build what is missing; the index last. |
-| repo-governance entry, older stamp | Upgrade first, then finish anything missing. |
-| repo-governance entry, current stamp | Check the shape; repair a named drift only. |
-| `AGENTS.md` this skill did not write | Do not convert it. Merge its facts into a new index and report what moved. |
-
-The same gate applies to each installed project skill, by its own `<!-- repo-governance skill: <preset> v1 -->` stamp: current, older (patch the named sections), or no stamp (not ours — merge, never overwrite).
+This file. A template only while you write that file. Nothing else in this skill.
 
 ## Process
 
-### 1. Detect
+### 1. Survey the repository
 
 ```bash
-ls AGENTS.md CLAUDE.md LESSONS.md docs scripts/verify.sh 2>/dev/null
-sed -n '1,3p' AGENTS.md 2>/dev/null
-find . -maxdepth 3 -type d -name skills -not -path './node_modules/*' -not -path './.git/*'
-git log --oneline -90 | head -30
+ls
+git log --oneline -30
+git branch -a && git tag --sort=-v:refname | head -5
+ls .github/workflows .gitlab-ci.yml Makefile justfile 2>/dev/null
+grep -rl "CONTRIBUTING\|CODE_OF_CONDUCT" . --include='*.md' 2>/dev/null | head
 ```
 
-Name the state, and for every existing file say keep, merge, rewrite or delete. Note which areas the repo already documents, and where.
+Record: stack and package manager, install/test/build/lint commands (run them), the branch that ships, the modules and where each one's docs live, owner gates, and what already documents this repo.
 
-**Complete when:** the state is named, every existing file has a decision, and the areas are listed.
+**Done when** every fact is a command you ran or a file you read — not an assumption.
 
-### 2. Load the procedure
+### 2. Pick the size
 
-`references/converge.md` for the fill order and version table; `references/file-contract.md` for what each file holds and what it must not; `references/skill-presets.md` for optional project skills; `templates/` and `templates/skills/` for shapes.
+- **No history yet** (few commits, no CI): write all five, each short. Zero postmortems is a valid result; write `None yet — add one after the first regression.`
+- **Some history**: same five; mine up to five incidents from the last 90 days.
+- **Already has docs**: keep them. Add the missing ones, point `AGENTS.md` at what exists, and never move a file without the owner.
 
-### 3. Build, areas first
+A sixth file needs the failure mode it catches. Say which, in the report.
 
-Areas, then the law, then the postmortems, then the index last — it can only index what exists. Install a project skill only where its failure mode exists.
+### 3. Write in this order
 
-**Complete when:** every required page exists with no `FILL` or placeholder left, and the index points only at pages that exist.
+`COLLAB.md` → `REVIEW.md` → `DECISIONS.md` → `POSTMORTEMS.md` → `AGENTS.md` last, so the index only points at what exists.
 
 ### 4. Fill real facts
 
-Run every command before writing it down. Mine 3–8 postmortems from the last 60–90 days; each names its evidence and its fix layer (process, code, permissions, docs).
-
-**Complete when:** each command ran here, and each entry cites a commit, issue or owner decision.
+- Run every command before writing it. A command that fails stays out, or is written as a known red with the failure.
+- A branch model comes from CI, branch protection or the owner. If none says, ask once; do not invent one.
+- A decision needs an owner and a date. If you cannot name them, it is not a decision — it is your preference.
+- A postmortem needs a commit, issue or incident, plus the layer: process, code, permissions, docs. The layer decides the fix: a gate, a test, a constraint, a sentence.
+- Branch and commit rules, review rows and decisions are the owner's, not yours. Ask.
 
 ### 5. Validate
 
-- **Two hops.** From `AGENTS.md`, through one area page, a reader reaches the file to change. Three hops means the index holds what the area page should.
-- **Traceability.** Every review row cites `D-` or `P-` or an issue; every postmortem names its review row.
-- **No duplication.** A rule appears once; a second mention is a link.
-- **Stamps** match, and a pasted `FILL` fails the skills gate in `verify.sh`.
-- `scripts/verify.sh` runs; a bad commit header fails its lint.
-- Each installed skill ran once end to end.
-- Second run reports `already current` and changes nothing.
+- From `AGENTS.md`, through one module's docs, a reader reaches the file to change. Two hops, not three.
+- Every row in `REVIEW.md` cites a source.
+- Every postmortem names a review row.
+- No `FILL` block and no unfilled `<PROJECT>`, `<module>` or `<command>` left; branch
+  patterns like `fix/<slug>` keep their shape.
+- Commands run from the repo root as written.
+- Run the whole thing again: it reports `already current` and writes nothing.
 
 ### 6. Report
 
-The state, what happened to each file, the postmortems and the review rows they produced, decisions recorded, skills installed or skipped with the reason, commands run, what is unverified, and any owner decision still open.
+State what you detected, which files you wrote or kept, which postmortems and decisions came from evidence, what you could not verify, and which files you deliberately skipped with the reason.
 
-## Keep this skill honest
+## Rules
 
-The harness is a draft until a repo uses it.
+- **Five files.** No nightly job, no verify script, no per-project skills. If the repo already has one of those, point at it instead of replacing it.
+- **No invented facts.** Unknown branch model, unknown owner, unknown command: ask, or write `TODO` and say so in the report. Never fill it with a plausible default.
+- **No numbers.** No budgets, no hit rates, no saved-percentage. Length is controlled by promotion: a rule that becomes a test leaves the postmortem, and a row that catches nothing is deleted.
+- **Idempotent.** A stamp, not a diff: `<!-- repo-governance: v3 -->` under the title. A second run with the same stamp changes nothing.
 
-- Record in each run's report which area page was **not** reached when the task needed it, and which review row failed to catch something it was written for.
-- The same miss three times means the trigger is wrong: fix the route or the page's title, not the agent's discipline.
-- A page or preset that helps twice in a row and never after gets deleted, or turned into a check the repo runs.
-- Never report a hit rate or a saved-percentage figure. Only what was counted.
+## Legacy layouts
+
+A repository written by an earlier draft may carry `docs/subsystems/`, `docs/code-standards.md`, `LESSONS.md`, `scripts/verify.sh` or project skills. Do not delete them. Map and keep: subsystem pages are module docs, `code-standards.md` becomes `REVIEW.md`, `LESSONS.md` becomes `POSTMORTEMS.md`, and the extra scripts stay where they are and get a pointer. Report what moved.
 
 ## Stop and ask
 
-Before: reversing a decision; changing CI, release scripts, permissions or secrets; changing the branch model or commit lint; landing a new surface without its design note; writing a live state directory; an irreversible migration or deletion; spending money, contacting users or making a public claim; renaming or deleting an existing area page or project skill.
-
-Adapted from magpie's agent workflow and Vue's contributor guide.
+Before: reversing a decision; changing CI, release scripts, permissions or secrets; changing the branch model; deleting or moving an existing document; an irreversible migration; publishing, spending, contacting users, or making a public claim.
