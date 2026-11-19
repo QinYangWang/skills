@@ -13,7 +13,7 @@ This is a reference, not a compliance checklist: every rule below names why it e
 
 | File | Job | One rule |
 | --- | --- | --- |
-| `AGENTS.md` | Index: what the repo is, the commands, one row per module, routes to the four documents, what needs the owner. | It points; it does not explain. |
+| `AGENTS.md` | Index: what the repo is, the commands, one row per module, routes to the four documents, the smallest-complete-change rule, what needs the owner. | It points; it does not explain. |
 | `docs/COLLAB.md` | Which branch a change kind takes, how to develop, how to commit and open a PR. | One branch, one kind. |
 | `docs/REVIEW.md` | What a reviewer checks, by change kind. | Every row cites `D-###`, `P-###` or an issue. |
 | `docs/DECISIONS.md` | Settled choices: what, why, what it forbids, who, when. | Append-only. |
