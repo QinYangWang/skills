@@ -18,6 +18,16 @@ and what will show it worked.
 - Reversible, inside one module: restate, then go.
 - Irreversible, public, cross-module, spending or new surface: restate and wait.
 
+## The smallest complete change
+
+Take the first option that works: does it need to exist → is it already here →
+does the platform give it → is it an installed dependency → one line → the
+minimum. Never cut validation at trust boundaries, error handling that prevents
+data loss, security or accessibility. New non-trivial logic leaves one small
+test; trivial changes need none. A known limit gets
+`shortcut: <the limit>, <when to upgrade>`. End a report with what you skipped
+and the risk.
+
 ## Modules
 
 Each module owns its docs and index; this table only points at them. Two hops:
